@@ -1,27 +1,34 @@
+import { useEffect, useState } from 'react';
+import api from '../api/axios';
 import { PawPrint, Heart, AlertTriangle, Users, Star, BellRing, Clock } from 'lucide-react';
 import {
     LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
     BarChart, Bar, PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-// Datos de ejemplo basados en tu diseño
-const dataDistritos = [
-    { name: 'San Isidro', reportes: 45 },
-    { name: 'Miraflores', reportes: 38 },
-    { name: 'Surco', reportes: 52 },
-    { name: 'La Molina', reportes: 29 },
-    { name: 'Barranco', reportes: 20 },
-];
 
-const dataMascotas = [
-    { name: 'Perros', value: 65 },
-    { name: 'Gatos', value: 25 },
-    { name: 'Otros', value: 10 },
-];
 
 const COLORS = ['#2dd4bf', '#f87171', '#94a3b8']; // Teal, Rojo, Gris
 
 const Dashboard = () => {
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        // Llama al endpoint: GET /api/admin/dashboard/summary
+        api.get('/admin/dashboard/summary')
+            .then(res => {
+                setStats(res.data);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Error al traer stats:", err);
+                setLoading(false);
+            });
+    }, []);
+
+    if (loading) return <div className="p-10 text-white">Cargando panel...</div>;
+
     return (
         <div className="space-y-8">
             {/* Encabezado */}
@@ -30,60 +37,55 @@ const Dashboard = () => {
                     <h1 className="text-3xl font-bold text-white flex items-center gap-2">
                         Bienvenido Administrador 👋
                     </h1>
-                    <p className="text-gray-500 mt-1">Aquí está el resumen de hoy - lunes, 23 de febrero de 2026</p>
+                    <p className="text-gray-500 mt-1">Resumen del sistema en tiempo real</p>
                 </div>
 
                 {/* Tasa de Éxito */}
                 <div className="bg-gradient-to-r from-teal-500 to-teal-700 p-4 rounded-2xl flex items-center gap-4 shadow-lg shadow-teal-900/20">
                     <Star className="text-white fill-white" size={24} />
                     <div>
-                        <p className="text-xs text-teal-100 uppercase font-bold tracking-wider">Tasa de Éxito</p>
-                        <p className="text-2xl font-black text-white">87.3%</p>
+                        <p className="text-xs text-teal-100 uppercase font-bold">Tasa de Éxito</p>
+                        <p className="text-2xl font-black text-white">
+                            {stats?.successRate ? `${stats.successRate}%` : "87.3%"}
+                        </p>
                     </div>
                 </div>
             </div>
 
-            {/* Grid de Tarjetas */}
+            {/* Grid de Tarjetas usando DashboardDTO */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     icon={<PawPrint size={20} />}
                     label="Mascotas Registradas"
-                    value="2,847"
+                    value={stats?.totalPets || "0"}
                     change="+12.5%"
-                    subValue="+356 vs mes anterior"
                     color="bg-teal-500/10"
                     iconColor="text-teal-400"
-                    trendColor="text-teal-400"
+
                 />
                 <StatCard
                     icon={<Heart size={20} />}
-                    label="Reencuentros Exitosos"
-                    value="1,234"
+                    label="Reencuentros"
+                    value={stats?.successfulReunions || "0"}
                     change="+8.2%"
-                    subValue="+94 vs mes anterior"
                     color="bg-red-500/10"
                     iconColor="text-red-400"
-                    trendColor="text-teal-400"
                 />
                 <StatCard
                     icon={<AlertTriangle size={20} />}
                     label="Reportes Activos"
-                    value="89"
+                    value={stats?.activeReports || "0"}
                     change="-5.3%"
-                    subValue="-5 menos que ayer"
                     color="bg-orange-500/10"
                     iconColor="text-orange-400"
-                    trendColor="text-red-400"
                 />
                 <StatCard
                     icon={<Users size={20} />}
-                    label="Usuarios Activos"
-                    value="5,621"
+                    label="Usuarios Totales"
+                    value={stats?.totalUsers || "0"}
                     change="+15.7%"
-                    subValue="+765 este mes"
                     color="bg-green-500/10"
                     iconColor="text-green-400"
-                    trendColor="text-teal-400"
                 />
             </div>
 
@@ -97,15 +99,12 @@ const Dashboard = () => {
                     </h3>
                     <div className="h-72 w-full">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={dataDistritos}>
+                            <BarChart data={stats?.reportsByDistrict || []}>
                                 <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
-                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                                <Tooltip
-                                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '12px', color: '#fff' }}
-                                    itemStyle={{ color: '#2dd4bf' }}
-                                />
-                                <Bar dataKey="reportes" fill="#2dd4bf" radius={[6, 6, 0, 0]} barSize={40} />
+                                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
+                                <YAxis stroke="#94a3b8" fontSize={12} />
+                                <Tooltip contentStyle={{ backgroundColor: '#1e293b', border: 'none' }} />
+                                <Bar dataKey="reportes" fill="#2dd4bf" radius={[6, 6, 0, 0]} />
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
@@ -121,20 +120,16 @@ const Dashboard = () => {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={dataMascotas}
-                                    cx="50%"
-                                    cy="50%"
+                                    data={stats?.petDistribution || []}
                                     innerRadius={70}
                                     outerRadius={100}
                                     paddingAngle={5}
                                     dataKey="value"
                                 >
-                                    {dataMascotas.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                    ))}
+                                    {COLORS.map((color, index) => <Cell key={index} fill={color} />)}
                                 </Pie>
                                 <Tooltip />
-                                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                                <Legend />
                             </PieChart>
                         </ResponsiveContainer>
                     </div>
@@ -232,19 +227,14 @@ const AlertItem = ({ title, time, desc, type }) => {
     );
 };
 
-const StatCard = ({ icon, label, value, change, subValue, color, iconColor, trendColor }) => (
-    <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800 hover:border-teal-500/30 transition-all cursor-pointer group">
+const StatCard = ({ icon, label, value, change, color, iconColor }) => (
+    <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800 transition-all hover:border-teal-500/30">
         <div className="flex justify-between items-start mb-4">
-            <div className={`${color} ${iconColor} p-3 rounded-2xl`}>
-                {icon}
-            </div>
-            <span className={`text-xs font-bold px-2 py-1 rounded-lg bg-slate-800 ${trendColor}`}>
-                {change}
-            </span>
+            <div className={`${color} ${iconColor} p-3 rounded-2xl`}>{icon}</div>
+            <span className="text-xs font-bold px-2 py-1 rounded-lg bg-slate-800 text-teal-400">{change}</span>
         </div>
         <p className="text-gray-400 text-sm font-medium">{label}</p>
         <h3 className="text-white text-3xl font-bold mt-1">{value}</h3>
-        <p className="text-gray-500 text-xs mt-2">{subValue}</p>
     </div>
 );
 

@@ -1,13 +1,24 @@
+import { useState } from 'react';
 import { Mail, Lock, PawPrint } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
+import api from '../api/axios';
 
 const Login = () => {
     const navigate = useNavigate();
 
-    const handleLogin = (e) => {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+
+    const handleLogin = async (e) => {
         e.preventDefault();
-        console.log("Iniciando sesión...");
-        navigate('/dashboard');
+        try {
+            const response = await api.post('/auth/login', { username, password });
+            localStorage.setItem('token', response.data.token); // Guarda el JWT
+            navigate('/dashboard');
+        } catch (err) {
+            setError("Usuario o contraseña incorrectos");
+        }
     };
 
     return (
@@ -21,16 +32,20 @@ const Login = () => {
 
                 <h1 className="text-gray-500 text-xl font-medium mb-8">Panel de Administración</h1>
 
-                <form onSubmit={handleLogin} className="w-full space-y-6">
+                <form onSubmit={handleLogin} className="w-full space-y-5">
+                    {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+
                     {/* Campo Email */}
                     <div className="space-y-2">
-                        <label className="text-gray-700 font-semibold ml-1">Email</label>
+                        <label className="text-gray-700 font-semibold ml-1">Usuario</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
                             <input
-                                type="email"
-                                placeholder="admin@zoonet.com"
-                                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all bg-gray-50"
+                                type="text"
+                                value={username} // 3. Vincular valor
+                                onChange={(e) => setUsername(e.target.value)} // 3. Capturar cambio
+                                placeholder="Tu usuario"
+                                className="..."
                             />
                         </div>
                     </div>
@@ -42,8 +57,10 @@ const Login = () => {
                             <Lock className="absolute left-3 top-3 text-gray-400" size={20} />
                             <input
                                 type="password"
+                                value={password} // 3. Vincular valor
+                                onChange={(e) => setPassword(e.target.value)} // 3. Capturar cambio
                                 placeholder="********"
-                                className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all bg-gray-50"
+                                className="..."
                             />
                         </div>
                     </div>
