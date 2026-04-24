@@ -6,15 +6,16 @@ import api from '../api/axios';
 const Login = () => {
     const navigate = useNavigate();
 
-    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
 
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await api.post('/auth/login', { username, password });
+            const response = await api.post('/auth/login', { email, password });
             localStorage.setItem('token', response.data.token); // Guarda el JWT
+            localStorage.setItem('role', response.data.role); // Guarda el rol del usuario
             navigate('/dashboard');
         } catch (err) {
             setError("Usuario o contraseña incorrectos");
@@ -37,14 +38,14 @@ const Login = () => {
 
                     {/* Campo Email */}
                     <div className="space-y-2">
-                        <label className="text-gray-700 font-semibold ml-1">Usuario</label>
+                        <label className="text-gray-700 font-semibold ml-1">Email</label>
                         <div className="relative">
                             <Mail className="absolute left-3 top-3 text-gray-400" size={20} />
                             <input
-                                type="text"
-                                value={username} // 3. Vincular valor
-                                onChange={(e) => setUsername(e.target.value)} // 3. Capturar cambio
-                                placeholder="Tu usuario"
+                                type="email"
+                                value={email} // 3. Vincular valor
+                                onChange={(e) => setEmail(e.target.value)} // 3. Capturar cambio
+                                placeholder="Tu email"
                                 className="..."
                             />
                         </div>

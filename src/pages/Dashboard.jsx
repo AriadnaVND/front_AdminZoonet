@@ -15,18 +15,25 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Llama al endpoint: GET /api/admin/dashboard/summary
-        api.get('/admin/dashboard/summary')
+        const token = localStorage.getItem('token');
+        const role = localStorage.getItem('role');
+
+        if (!token || role !== 'ROLE_ADMIN') {
+            window.location.href = '/login';
+            return;
+        }
+
+        api.get('/admin/stats')
             .then(res => {
                 setStats(res.data);
                 setLoading(false);
             })
             .catch(err => {
                 console.error("Error al traer stats:", err);
-                setLoading(false);
+                // Si llega aquí con 401/403, axios.js hará el redirect
             });
     }, []);
-
+    
     if (loading) return <div className="p-10 text-white">Cargando panel...</div>;
 
     return (
