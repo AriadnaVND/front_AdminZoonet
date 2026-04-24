@@ -4,7 +4,7 @@ const api = axios.create({
     baseURL: 'http://localhost:8081/api',
 });
 
-// Este interceptor pega el token automáticamente en cada llamada
+// Interceptor de solicitud: adjunta el token JWT si existe en el almacenamiento local
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('token'); 
     if (token) {
@@ -13,12 +13,16 @@ api.interceptors.request.use((config) => {
     return config;
 }, (error) => Promise.reject(error));
 
+// Interceptor de respuesta: maneja errores de autenticación de forma específica
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        // CORRECCIÓN: Se elimina el status 403 para evitar expulsiones por rutas inexistentes.
+        // Solo redirigimos al login si el status es 401 (No autorizado / Token expirado).
+        if (error.response && error.response.status === 401) {
             localStorage.removeItem('token');
-            window.location.href = '/login'; // Forzar login si el token expiró
+            localStorage.removeItem('role'); // Limpiamos también el rol por seguridad
+            window.location.href = '/login'; 
         }
         return Promise.reject(error);
     }

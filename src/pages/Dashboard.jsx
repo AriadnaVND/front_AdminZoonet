@@ -6,9 +6,7 @@ import {
     BarChart, Bar, PieChart, Pie, Cell, Legend
 } from 'recharts';
 
-
-
-const COLORS = ['#2dd4bf', '#f87171', '#94a3b8']; // Teal, Rojo, Gris
+const COLORS = ['#2dd4bf', '#f87171', '#94a3b8'];
 
 const Dashboard = () => {
     const [stats, setStats] = useState(null);
@@ -18,19 +16,21 @@ const Dashboard = () => {
         const token = localStorage.getItem('token');
         const role = localStorage.getItem('role');
 
+        // 1. Verificación de seguridad: ROLE_ADMIN debe coincidir con el Backend
         if (!token || role !== 'ROLE_ADMIN') {
             window.location.href = '/login';
             return;
         }
 
-        api.get('/admin/stats')
+        // 2. CORRECCIÓN DE RUTA: Se cambia '/admin/stats' por la ruta real del Backend
+        api.get('/admin/dashboard/summary')
             .then(res => {
                 setStats(res.data);
                 setLoading(false);
             })
             .catch(err => {
                 console.error("Error al traer stats:", err);
-                // Si llega aquí con 401/403, axios.js hará el redirect
+                // Si el error es 401 o 403, el interceptor en axios.js manejará la salida
             });
     }, []);
     
@@ -38,7 +38,6 @@ const Dashboard = () => {
 
     return (
         <div className="space-y-8">
-            {/* Encabezado */}
             <div className="flex justify-between items-end">
                 <div>
                     <h1 className="text-3xl font-bold text-white flex items-center gap-2">
@@ -47,41 +46,39 @@ const Dashboard = () => {
                     <p className="text-gray-500 mt-1">Resumen del sistema en tiempo real</p>
                 </div>
 
-                {/* Tasa de Éxito */}
                 <div className="bg-gradient-to-r from-teal-500 to-teal-700 p-4 rounded-2xl flex items-center gap-4 shadow-lg shadow-teal-900/20">
                     <Star className="text-white fill-white" size={24} />
                     <div>
                         <p className="text-xs text-teal-100 uppercase font-bold">Tasa de Éxito</p>
                         <p className="text-2xl font-black text-white">
+                            {/* Usamos datos del DashboardDTO del backend */}
                             {stats?.successRate ? `${stats.successRate}%` : "87.3%"}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* Grid de Tarjetas usando DashboardDTO */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     icon={<PawPrint size={20} />}
                     label="Mascotas Registradas"
-                    value={stats?.totalPets || "0"}
+                    value={stats?.totalPets || "0"} // Mapeo de DashboardDTO
                     change="+12.5%"
                     color="bg-teal-500/10"
                     iconColor="text-teal-400"
-
                 />
                 <StatCard
                     icon={<Heart size={20} />}
-                    label="Reencuentros"
-                    value={stats?.successfulReunions || "0"}
+                    label="Premium Activos"
+                    value={stats?.activePremium || "0"} // Mapeo de DashboardDTO
                     change="+8.2%"
                     color="bg-red-500/10"
                     iconColor="text-red-400"
                 />
                 <StatCard
                     icon={<AlertTriangle size={20} />}
-                    label="Reportes Activos"
-                    value={stats?.activeReports || "0"}
+                    label="Tickets Pendientes"
+                    value={stats?.pendingTickets || "0"} // Mapeo de DashboardDTO
                     change="-5.3%"
                     color="bg-orange-500/10"
                     iconColor="text-orange-400"
@@ -89,7 +86,7 @@ const Dashboard = () => {
                 <StatCard
                     icon={<Users size={20} />}
                     label="Usuarios Totales"
-                    value={stats?.totalUsers || "0"}
+                    value={stats?.totalUsers || "0"} // Mapeo de DashboardDTO
                     change="+15.7%"
                     color="bg-green-500/10"
                     iconColor="text-green-400"
@@ -97,8 +94,6 @@ const Dashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-10">
-
-                {/* Gráfica de Barras */}
                 <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800">
                     <h3 className="text-white font-bold mb-6 flex items-center gap-2">
                         <span className="w-2 h-2 bg-teal-400 rounded-full"></span>
@@ -117,17 +112,16 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Gráfica de Dona */}
                 <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800">
                     <h3 className="text-white font-bold mb-6 flex items-center gap-2">
                         <span className="w-2 h-2 bg-pink-400 rounded-full"></span>
-                        Distribución por Tipo de Mascota
+                        Estatus de Dispositivos
                     </h3>
                     <div className="h-72 w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={stats?.petDistribution || []}
+                                    data={stats?.devicesStatus ? Object.entries(stats.devicesStatus).map(([name, value]) => ({ name, value })) : []}
                                     innerRadius={70}
                                     outerRadius={100}
                                     paddingAngle={5}
@@ -141,7 +135,7 @@ const Dashboard = () => {
                         </ResponsiveContainer>
                     </div>
                 </div>
-                {/* Actividad Semanal (Ocupa 2 columnas en pantallas grandes) */}
+
                 <div className="lg:col-span-2 bg-[#1e293b] p-6 rounded-3xl border border-slate-800">
                     <div className="flex justify-between items-center mb-6">
                         <h3 className="text-white font-bold flex items-center gap-2">
@@ -176,43 +170,11 @@ const Dashboard = () => {
                         </ResponsiveContainer>
                     </div>
                 </div>
-
-                {/* Alertas Rápidas (Ocupa 1 columna) */}
-                <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800 flex flex-col">
-                    <h3 className="text-white font-bold mb-6 flex items-center gap-2">
-                        <BellRing className="text-red-400" size={20} />
-                        Alertas Rápidas
-                    </h3>
-                    <div className="space-y-4 flex-1">
-                        <AlertItem
-                            title="Collar Desconectado"
-                            time="Hace 2 min"
-                            desc="ID: #ZO-892 (Doberman)"
-                            type="danger"
-                        />
-                        <AlertItem
-                            title="Reporte Crítico"
-                            time="Hace 15 min"
-                            desc="Mascota perdida en Surco"
-                            type="warning"
-                        />
-                        <AlertItem
-                            title="Nuevo Usuario Admin"
-                            time="Hace 1 hora"
-                            desc="Ariadna se ha unido"
-                            type="info"
-                        />
-                    </div>
-                    <button className="w-full mt-6 py-2 text-sm text-teal-400 font-semibold border border-teal-400/20 rounded-xl hover:bg-teal-400/10 transition-colors">
-                        Ver todo el historial
-                    </button>
-                </div>
             </div>
         </div>
     );
 };
 
-// 3. Componentes Auxiliares (Al final para orden)
 const AlertItem = ({ title, time, desc, type }) => {
     const colors = {
         danger: "bg-red-500/20 text-red-400",

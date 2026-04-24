@@ -7,28 +7,44 @@ import MainLayout from './layouts/MainLayout';
 // Componente para proteger rutas
 const ProtectedRoute = () => {
     const token = localStorage.getItem('token');
-    // Si no hay token, manda al login. Si hay, muestra el contenido (Outlet)
     return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
+
+// Componente temporal para secciones que aún no creas
+const Placeholder = ({ title }) => (
+    <div className="p-10 text-white bg-slate-900 h-full rounded-3xl border border-slate-800">
+        <h2 className="text-2xl font-bold mb-4">{title}</h2>
+        <p className="text-gray-400">Esta sección está en desarrollo para el panel administrativo de Zoonet.</p>
+    </div>
+);
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* La ruta principal ahora es el Login */}
+        {/* Rutas Públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Rutas Privadas con el Sidebar y Navbar */}
+        {/* Rutas Privadas */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            {/* <Route path="/usuarios" element={<UserManagement />} /> */}
+            
+            {/* Aquí registramos TODAS las rutas que pusiste en tu Sidebar */}
+            <Route path="/usuarios" element={<Placeholder title="Gestión de Usuarios" />} />
+            <Route path="/pagos" element={<Placeholder title="Control de Pagos" />} />
+            <Route path="/comunidad" element={<Placeholder title="Foros y Comunidad" />} />
+            <Route path="/ia" element={<Placeholder title="Análisis con IA" />} />
+            <Route path="/collares" element={<Placeholder title="Gestión de Collares" />} />
+            <Route path="/reportes" element={<Placeholder title="Reportes del Sistema" />} />
+            <Route path="/soporte" element={<Placeholder title="Tickets de Soporte" />} />
           </Route>
         </Route>
 
-        {/* Redirigir cualquier otra ruta al login por ahora */}
-        <Route path="*" element={<Navigate to="/login" />} />
+        {/* Si el usuario intenta ir a una ruta que no existe */}
+        {/* Si hay token, lo dejamos en el dashboard, si no, al login */}
+        <Route path="*" element={localStorage.getItem('token') ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );
