@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './components/Usuarios';
+import Comunidad from './components/Comunidad';
 import MainLayout from './layouts/MainLayout';
 
 // Componente para proteger rutas
@@ -32,12 +33,13 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/comunidad" element={<Comunidad />} />
+            <Route path="/ia" element={<Comunidad />} />
 
             {/* Aquí registramos TODAS las rutas que pusiste en tu Sidebar */}
             
             <Route path="/pagos" element={<Placeholder title="Control de Pagos" />} />
-            <Route path="/comunidad" element={<Placeholder title="Foros y Comunidad" />} />
-            <Route path="/ia" element={<Placeholder title="Análisis con IA" />} />
+            
             <Route path="/collares" element={<Placeholder title="Gestión de Collares" />} />
             <Route path="/reportes" element={<Placeholder title="Reportes del Sistema" />} />
             <Route path="/soporte" element={<Placeholder title="Tickets de Soporte" />} />
