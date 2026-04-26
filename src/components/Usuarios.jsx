@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getUsers, updateUserStatus } from '../api/userService';
-import { Trash2, ShieldAlert, CheckCircle } from 'lucide-react'; // Iconos sugeridos
+import { Trash2, ShieldAlert, CheckCircle, Users, Crown, TrendingUp } from 'lucide-react'; // Iconos sugeridos
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
@@ -22,76 +22,137 @@ const UserManagement = () => {
     };
 
     const handleStatusChange = async (userId, newStatus) => {
-        if (window.confirm(`¿Estás seguro de cambiar el estado a ${newStatus}?`)) {
-            try {
-                await updateUserStatus(userId, newStatus);
-                // Actualizar la lista localmente para no recargar todo
-                setUsers(users.map(user =>
-                    user.id === userId ? { ...user, status: newStatus } : user
-                ));
-            } catch (error) {
-                alert("Error al actualizar el estado");
-            }
+        try {
+            await updateUserStatus(userId, newStatus);
+
+            setUsers(users.map(user =>
+                user.id === userId ? { ...user, active: newStatus } : user
+            ));
+        } catch {
+            alert("Error al actualizar");
         }
     };
+
+    const activeUsers = users.filter(u => u.active).length;
 
     if (loading) return <div className="p-6">Cargando usuarios...</div>;
 
     return (
-        <div className="p-6 bg-white rounded-lg shadow-md">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Gestión de Usuarios</h2>
-            <div className="overflow-x-auto">
-                <table className="min-w-full table-auto">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Usuario</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acciones</th>
+        <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-8 text-white">
+
+            {/* HEADER */}
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                    <h1 className="text-3xl font-bold">Gestión de Usuarios</h1>
+                    <p className="text-slate-400">Administra los usuarios registrados</p>
+                </div>
+
+                <div className="bg-slate-700 px-4 py-2 rounded-xl flex items-center gap-2">
+                    <Users size={18} />
+                    <span>Total: {users.length}</span>
+                </div>
+            </div>
+
+            {/* CARDS */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+
+                <div className="bg-slate-700 p-5 rounded-2xl shadow-lg">
+                    <div className="flex justify-between">
+                        <Crown className="text-yellow-400" />
+                        <span>{users.length}</span>
+                    </div>
+                    <p className="text-slate-400 mt-3">Total Usuarios</p>
+                </div>
+
+                <div className="bg-slate-700 p-5 rounded-2xl shadow-lg">
+                    <div className="flex justify-between">
+                        <CheckCircle className="text-green-400" />
+                        <span>{activeUsers}/{users.length}</span>
+                    </div>
+                    <p className="text-slate-400 mt-3">Activos</p>
+                </div>
+
+                <div className="bg-slate-700 p-5 rounded-2xl shadow-lg">
+                    <div className="flex justify-between">
+                        <TrendingUp className="text-blue-400" />
+                        <span>+0</span>
+                    </div>
+                    <p className="text-slate-400 mt-3">Nuevos (30d)</p>
+                </div>
+
+                <div className="bg-slate-700 p-5 rounded-2xl shadow-lg">
+                    <div className="flex justify-between">
+                        <Users className="text-cyan-400" />
+                        <span>{users.length}</span>
+                    </div>
+                    <p className="text-slate-400 mt-3">Total Mascotas</p>
+                </div>
+
+            </div>
+
+            {/* TABLA */}
+            <div className="bg-slate-800 rounded-2xl p-6 shadow-lg">
+
+                <div className="flex justify-between mb-4">
+                    <h2 className="text-xl font-semibold">Usuarios</h2>
+
+                    <input
+                        placeholder="Buscar usuario..."
+                        className="bg-slate-700 px-4 py-2 rounded-lg outline-none"
+                    />
+                </div>
+
+                <table className="w-full">
+                    <thead>
+                        <tr className="text-slate-400 text-left">
+                            <th className="py-3">Usuario</th>
+                            <th>Email</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-200">
+
+                    <tbody>
                         {users.map((user) => (
-                            <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-6 py-4 whitespace-nowrap">{user.username}</td>
-                                <td className="px-6 py-4">{user.email}</td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2 py-1 rounded-full text-xs ${user.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                            <tr key={user.id} className="border-t border-slate-700 hover:bg-slate-700/40">
+
+                                <td className="py-3">{user.name}</td>
+                                <td>{user.email}</td>
+
+                                <td>
+                                    <span className={`px-3 py-1 rounded-full text-xs ${user.active
+                                        ? 'bg-green-500/20 text-green-400'
+                                        : 'bg-red-500/20 text-red-400'
                                         }`}>
-                                        {user.status}
+                                        {user.active ? 'Activo' : 'Inactivo'}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 flex space-x-3">
-                                    {user.status === 'ACTIVE' ? (
-                                        <button
-                                            onClick={() => handleStatusChange(user.id, 'BANNED')}
-                                            className="text-yellow-600 hover:text-yellow-900"
-                                            title="Banear Usuario"
-                                        >
-                                            <ShieldAlert size={20} />
+
+                                <td className="flex gap-3 py-3">
+
+                                    {user.active ? (
+                                        <button onClick={() => handleStatusChange(user.id, false)}>
+                                            <ShieldAlert className="text-yellow-400 hover:scale-110" />
                                         </button>
                                     ) : (
-                                        <button
-                                            onClick={() => handleStatusChange(user.id, 'ACTIVE')}
-                                            className="text-green-600 hover:text-green-900"
-                                            title="Activar Usuario"
-                                        >
-                                            <CheckCircle size={20} />
+                                        <button onClick={() => handleStatusChange(user.id, true)}>
+                                            <CheckCircle className="text-green-400 hover:scale-110" />
                                         </button>
                                     )}
-                                    <button
-                                        onClick={() => handleStatusChange(user.id, 'DELETED')}
-                                        className="text-red-600 hover:text-red-900"
-                                        title="Borrado Lógico"
-                                    >
-                                        <Trash2 size={20} />
+
+                                    <button onClick={() => handleStatusChange(user.id, false)}>
+                                        <Trash2 className="text-red-400 hover:scale-110" />
                                     </button>
+
                                 </td>
+
                             </tr>
                         ))}
                     </tbody>
                 </table>
+
             </div>
+
         </div>
     );
 };
