@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Usuarios from './components/Usuarios';
 import MainLayout from './layouts/MainLayout';
 
 // Componente para proteger rutas
@@ -30,9 +31,10 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            
+            <Route path="/usuarios" element={<Usuarios />} />
+
             {/* Aquí registramos TODAS las rutas que pusiste en tu Sidebar */}
-            <Route path="/usuarios" element={<Placeholder title="Gestión de Usuarios" />} />
+            
             <Route path="/pagos" element={<Placeholder title="Control de Pagos" />} />
             <Route path="/comunidad" element={<Placeholder title="Foros y Comunidad" />} />
             <Route path="/ia" element={<Placeholder title="Análisis con IA" />} />
