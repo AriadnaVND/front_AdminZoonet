@@ -12,7 +12,7 @@ const ProtectedRoute = () => {
     return token ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
-// Componente temporal para secciones que aún no creas
+// Componente temporal para secciones en desarrollo
 const Placeholder = ({ title }) => (
     <div className="p-10 text-white bg-slate-900 h-full rounded-3xl border border-slate-800">
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
@@ -24,31 +24,38 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Rutas Públicas */}
+        {/* 1. Redirección explícita de la raíz al login */}
+        <Route path="/" element={<Navigate to="/login" replace />} />
+
+        {/* 2. Rutas Públicas */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
-        {/* Rutas Privadas */}
+        {/* 3. Rutas Privadas (Protegidas) */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/comunidad" element={<Comunidad />} />
             <Route path="/ia" element={<Comunidad />} />
-
-            {/* Aquí registramos TODAS las rutas que pusiste en tu Sidebar */}
             
+            {/* Rutas del Sidebar con Placeholder */}
             <Route path="/pagos" element={<Placeholder title="Control de Pagos" />} />
-            
             <Route path="/collares" element={<Placeholder title="Gestión de Collares" />} />
             <Route path="/reportes" element={<Placeholder title="Reportes del Sistema" />} />
             <Route path="/soporte" element={<Placeholder title="Tickets de Soporte" />} />
           </Route>
         </Route>
 
-        {/* Si el usuario intenta ir a una ruta que no existe */}
-        {/* Si hay token, lo dejamos en el dashboard, si no, al login */}
-        <Route path="*" element={localStorage.getItem('token') ? <Navigate to="/dashboard" /> : <Navigate to="/login" />} />
+        {/* 4. Manejo de rutas inexistentes (404 / Catch-all) */}
+        <Route 
+            path="*" 
+            element={
+                localStorage.getItem('token') 
+                ? <Navigate to="/dashboard" replace /> 
+                : <Navigate to="/login" replace />
+            } 
+        />
       </Routes>
     </BrowserRouter>
   );
