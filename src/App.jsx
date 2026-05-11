@@ -9,9 +9,10 @@ import MainLayout from './layouts/MainLayout';
 // 1. IMPORTACIÓN DE COMPONENTES REALES CONECTADOS
 import Soporte from './pages/Soporte'; 
 import Collares from './components/Collares'; 
-import IAControl from './pages/IAControl'; // El componente de IA que creamos
-import PagosAdmin from './pages/PagosAdmin'; // Componente de pagos
-import ReportesMascotas from './pages/ReportesMascotas'; // Componente de lost_pets
+import IAControl from './pages/IAControl'; 
+import PagosAdmin from './pages/PagosAdmin'; 
+import ReportesMascotas from './pages/ReportesMascotas'; 
+import AdminProfile from './pages/AdminProfile'; // 🆕 Importamos la nueva página de perfil
 
 // Componente para proteger rutas
 const ProtectedRoute = () => {
@@ -37,9 +38,7 @@ function App() {
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/comunidad" element={<Comunidad />} />
             
-            {/* 2. RUTAS ACTUALIZADAS CON COMPONENTES REALES */}
-            
-            {/* Gestión de IA: Ahora usa IAControl en lugar de Comunidad */}
+            {/* Gestión de IA */}
             <Route path="/ia" element={<IAControl />} />
             
             {/* Gestión de Collares IoT */}
@@ -53,6 +52,9 @@ function App() {
             
             {/* Reportes de Mascotas Perdidas (lost_pets) */}
             <Route path="/reportes" element={<ReportesMascotas />} />
+
+            {/* 🆕 NUEVA RUTA: Perfil del Administrador */}
+            <Route path="/admin-profile" element={<AdminProfile />} />
           </Route>
         </Route>
 

@@ -1,11 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import api from '../api/axios';
-import { Trash2, ShieldAlert, CheckCircle, Users, Crown, TrendingUp, Phone, Mail } from 'lucide-react';
+import React, { useEffect, useState, useMemo } from 'react';
+import { userService } from '../api/userService';
+import { 
+  ShieldAlert, CheckCircle, Users, Crown, 
+  Plus, X, Save, Search, Activity, Zap
+} from 'lucide-react';
 
 const UserManagement = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
+    const [filterPlan, setFilterPlan] = useState('ALL'); 
+    
+    const [showModal, setShowModal] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [formData, setFormData] = useState({ name: '', email: '', password: '', plan: 'BASIC', active: true });
 
     useEffect(() => {
         loadUsers();
@@ -13,172 +21,241 @@ const UserManagement = () => {
 
     const loadUsers = async () => {
         try {
-            // Este endpoint debe llamar a userRepository.findAllUsersSummary() en el Backend
-            const response = await api.get('/admin/users/all');
-            setUsers(response.data);
+            const response = await userService.getAllUsers();
+            const cleanData = response.data.map(u => ({
+                ...u,
+                plan: u.plan ? u.plan.trim().toUpperCase() : 'BASIC'
+            }));
+            setUsers(cleanData);
         } catch (error) {
-            console.error("Error al cargar usuarios de Zoonet", error);
+            console.error("Error al cargar usuarios", error);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleStatusChange = async (userId, currentActiveStatus) => {
-        try {
-            // Enviamos el opuesto del estado actual
-            const newStatus = !currentActiveStatus;
-            await api.put(`/admin/users/${userId}/status`, { active: newStatus });
+    const stats = useMemo(() => {
+        return {
+            total: users.length,
+            activos: users.filter(u => u.active).length,
+            premium: users.filter(u => u.plan === 'PREMIUM').length,
+            free: users.filter(u => u.plan !== 'PREMIUM').length,
+        };
+    }, [users]);
 
-            // Actualizamos el estado localmente para reflejar el cambio en la tabla
-            setUsers(users.map(user =>
-                user.id === userId ? { ...user, active: newStatus } : user
-            ));
-        } catch {
-            alert("No se pudo actualizar el estado del usuario");
+    const handleSearch = async (e) => {
+        const value = e.target.value;
+        setSearchTerm(value);
+        if (value.trim() === "") {
+            loadUsers();
+        } else {
+            try {
+                const response = await userService.searchUsers(value);
+                setUsers(response.data.map(u => ({ ...u, plan: u.plan.trim().toUpperCase() })));
+            } catch (error) {
+                console.error("Error en la búsqueda", error);
+            }
         }
     };
 
-    // FILTRADO: Excluimos al Administrador y aplicamos búsqueda
-    const filteredUsers = users.filter(user =>
-        user.rol !== 'ADMIN' && // Usamos el campo 'rol' que agregamos al DTO
-        (user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const handleStatusChange = async (userId, currentActiveStatus) => {
+        try {
+            const newStatus = !currentActiveStatus;
+            await userService.toggleUserStatus(userId, newStatus);
+            setUsers(users.map(u => u.id === userId ? { ...u, active: newStatus } : u));
+        } catch {
+            alert("Error al actualizar estado");
+        }
+    };
 
-    const premiumUsers = users.filter(u => u.plan === 'PREMIUM' && u.rol !== 'ADMIN');
-    // Ajuste: Ahora usamos el campo 'active' (booleano) que viene de la BD
-    const activeUsersCount = users.filter(u => u.active && u.rol !== 'ADMIN').length;
+    const openModal = (user = null) => {
+        if (user) {
+            setSelectedUser(user);
+            setFormData({ name: user.name, email: user.email, password: '', plan: user.plan, active: user.active });
+        } else {
+            setSelectedUser(null);
+            setFormData({ name: '', email: '', password: '', plan: 'BASIC', active: true });
+        }
+        setShowModal(true);
+    };
 
-    if (loading) return (
-        <div className="flex items-center justify-center p-20 text-teal-400 font-bold">
-            <TrendingUp className="animate-bounce mr-2" />
-            Cargando base de datos de usuarios de Railway...
-        </div>
-    );
+    const handleSaveUser = async (e) => {
+        e.preventDefault();
+        try {
+            if (selectedUser) {
+                await userService.updateUser(selectedUser.id, formData);
+            } else {
+                await userService.createUser(formData);
+            }
+            loadUsers();
+            setShowModal(false);
+        } catch (error) {
+            alert("Error al procesar la solicitud");
+        }
+    };
+
+    if (loading) return <div className="p-20 text-teal-400 font-bold text-center">Cargando Zoonet...</div>;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            {/* HEADER */}
-            <div className="flex justify-between items-center text-left">
+        <div className="p-6 space-y-6 animate-in fade-in duration-500 bg-[#0f172a] min-h-screen text-slate-200">
+            
+            {/* --- HEADER (Estilo Imagen 3) --- */}
+            <div className="flex justify-between items-start">
                 <div>
-                    <h1 className="text-3xl font-bold text-white">Gestión de Usuarios</h1>
-                    <p className="text-slate-400">Control de suscriptores y estados de cuenta</p>
+                    <h1 className="text-2xl font-bold text-white tracking-tight">Gestión de Usuarios</h1>
+                    <p className="text-slate-400 text-xs mt-1">Control de acceso y suscripciones</p>
                 </div>
-                <div className="bg-slate-800/50 border border-slate-700 px-4 py-2 rounded-2xl flex items-center gap-2 text-teal-400">
-                    <Users size={18} />
-                    <span className="font-bold text-sm tracking-tight">Total Clientes: {filteredUsers.length}</span>
-                </div>
-            </div>
-
-            {/* CARDS ESTADÍSTICAS */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <StatCard title="Usuarios Premium" value={premiumUsers.length} icon={<Crown className="text-yellow-400" />} color="bg-yellow-500/10" />
-                <StatCard title="Cuentas Activas" value={activeUsersCount} icon={<CheckCircle className="text-green-400" />} color="bg-green-500/10" />
-                <StatCard title="Nuevos este mes" value="+12" icon={<TrendingUp className="text-blue-400" />} color="bg-blue-500/10" />
-                <StatCard
-                    title="Total Mascotas"
-                    value={filteredUsers.reduce((acc, u) => acc + (u.petsCount || 0), 0)}
-                    icon={<Users className="text-teal-400" />}
-                    color="bg-teal-500/10"
-                />
-            </div>
-
-            {/* TABLA DE USUARIOS */}
-            <div className="bg-[#1e293b] rounded-3xl p-8 border border-slate-800 shadow-2xl">
-                <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 text-left">
-                    <h2 className="text-xl font-bold text-white">Listado de Usuarios en el Sistema</h2>
-                    <div className="relative w-full md:w-96">
-                        <input
-                            type="text"
-                            placeholder="Buscar por nombre o correo..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-slate-900/50 border border-slate-700 text-white px-5 py-3 rounded-2xl outline-none focus:border-teal-500 transition-all text-sm"
-                        />
+                <div className="bg-[#1e293b] border border-slate-700/50 p-2 px-4 rounded-xl flex items-center gap-3 shadow-lg">
+                    <Users className="text-teal-400" size={18} />
+                    <div className="leading-tight">
+                        <p className="text-[9px] text-slate-500 uppercase font-black tracking-widest">Total Global</p>
+                        <p className="text-lg font-black text-white">{stats.total}</p>
                     </div>
                 </div>
+            </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead>
-                            <tr className="text-slate-500 text-[11px] uppercase tracking-widest font-black border-b border-slate-800">
-                                <th className="pb-4">Usuario / Contacto</th>
-                                <th className="pb-4">Mascotas</th>
-                                <th className="pb-4">Estado</th>
-                                <th className="pb-4">Plan</th>
-                                <th className="pb-4 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800">
-                            {filteredUsers.map((user) => (
-                                <tr key={user.id} className="group hover:bg-slate-800/30 transition-colors">
-                                    <td className="py-5">
-                                        <div className="flex flex-col">
-                                            <span className="text-white font-bold text-base leading-tight">{user.name}</span>
-                                            <div className="flex items-center gap-3 mt-1 text-[11px] text-slate-500">
-                                                <span className="flex items-center gap-1"><Mail size={10} /> {user.email}</span>
-                                                <span className="flex items-center gap-1 font-mono tracking-tighter"><Phone size={10} /> {user.phone || 'N/A'}</span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td className="py-5">
-                                        <div className="flex items-center gap-2">
-                                            <span className="bg-slate-900 border border-slate-700 text-teal-400 px-3 py-1 rounded-lg text-xs font-black">
-                                                {user.petsCount}
-                                            </span>
-                                            <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Animales</span>
-                                        </div>
-                                    </td>
-                                    <td className="py-5">
-                                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${
-                                            user.active
-                                                ? 'bg-green-500/10 text-green-400 border-green-500/20'
-                                                : 'bg-red-500/10 text-red-400 border-red-500/20'
-                                            }`}>
-                                            {user.active ? 'Activo' : 'Suspendido'}
-                                        </span>
-                                    </td>
-                                    <td className="py-5">
-                                        <span className={`font-black text-xs tracking-widest ${user.plan === 'PREMIUM' ? 'text-yellow-500' : 'text-slate-500'}`}>
-                                            {user.plan}
-                                        </span>
-                                    </td>
-                                    <td className="py-5">
-                                        <div className="flex justify-center gap-2">
-                                            <button
-                                                title={user.active ? "Suspender Usuario" : "Activar Usuario"}
-                                                onClick={() => handleStatusChange(user.id, user.active)}
-                                                className="p-2.5 rounded-xl hover:bg-slate-700 transition-all text-slate-400"
-                                            >
-                                                {user.active
-                                                    ? <ShieldAlert className="text-yellow-500/70 hover:text-yellow-500" size={18} />
-                                                    : <CheckCircle className="text-green-500/70 hover:text-green-500" size={18} />
-                                                }
-                                            </button>
-                                            <button className="p-2.5 rounded-xl hover:bg-red-500/10 transition-all text-slate-400 hover:text-red-400">
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            {/* --- STATS CARDS (Estilo Compacto Imagen 2) --- */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm">
+                    <div className="bg-amber-500/10 p-2 rounded-lg w-fit mb-3"><Crown className="text-amber-500" size={20}/></div>
+                    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Premium</p>
+                    <h3 className="text-2xl font-black text-white">{stats.premium}</h3>
+                </div>
+
+                <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm">
+                    <div className="bg-blue-500/10 p-2 rounded-lg w-fit mb-3"><Zap className="text-blue-500" size={20}/></div>
+                    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Free</p>
+                    <h3 className="text-2xl font-black text-white">{stats.free}</h3>
+                </div>
+
+                <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden">
+                    <div className="bg-emerald-500/10 p-2 rounded-lg w-fit mb-3"><Activity className="text-emerald-500" size={20}/></div>
+                    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Activos</p>
+                    <h3 className="text-2xl font-black text-white">{stats.activos}</h3>
+                    <div className="absolute bottom-0 left-0 w-full bg-emerald-500 h-0.5 opacity-50"></div>
+                </div>
+
+                {/* BOTÓN AGREGAR USUARIO (Estilo Imagen 2) */}
+                <button 
+                    onClick={() => openModal()} 
+                    className="bg-[#1e293b]/30 border-2 border-dashed border-teal-500/30 hover:border-teal-500/60 p-5 rounded-2xl flex flex-col justify-center items-center gap-2 transition-all group active:scale-95"
+                >
+                    <Plus className="text-teal-500 group-hover:scale-110 transition-transform" size={24} />
+                    <span className="text-teal-500 font-bold text-xs uppercase tracking-widest">Agregar Usuario</span>
+                </button>
+            </div>
+
+            {/* --- BARRA DE FILTROS --- */}
+            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div className="flex bg-[#1e293b] p-1 rounded-xl border border-slate-800">
+                    <button onClick={() => setFilterPlan('ALL')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${filterPlan === 'ALL' ? 'bg-teal-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Todos</button>
+                    <button onClick={() => setFilterPlan('PREMIUM')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${filterPlan === 'PREMIUM' ? 'bg-teal-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Premium</button>
+                    <button onClick={() => setFilterPlan('FREE')} className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${filterPlan === 'FREE' ? 'bg-teal-500 text-white' : 'text-slate-500 hover:text-slate-300'}`}>Free</button>
+                </div>
+
+                <div className="relative w-full md:w-80 group">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-500 transition-colors" size={16} />
+                    <input
+                        type="text"
+                        placeholder="Buscar..."
+                        value={searchTerm}
+                        onChange={handleSearch}
+                        className="w-full bg-[#1e293b] border border-slate-800 text-white pl-10 pr-4 py-2 rounded-xl outline-none focus:border-teal-500 text-sm transition-all"
+                    />
                 </div>
             </div>
+
+            {/* --- TABLA --- */}
+            <div className="bg-[#1e293b] rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+                <table className="w-full text-left">
+                    <thead>
+                        <tr className="text-slate-500 text-[10px] font-black uppercase tracking-widest bg-slate-800/30">
+                            <th className="px-6 py-4">Usuario</th>
+                            <th className="px-6 py-4 text-center">Estado</th>
+                            <th className="px-6 py-4">Plan</th>
+                            <th className="px-6 py-4 text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50 text-sm">
+                        {users
+                            .filter(u => u.role !== 'ROLE_ADMIN')
+                            .filter(u => filterPlan === 'ALL' ? true : (filterPlan === 'PREMIUM' ? u.plan === 'PREMIUM' : u.plan !== 'PREMIUM'))
+                            .map((user) => (
+                            <tr key={user.id} className="hover:bg-slate-800/40 transition-all">
+                                <td className="px-6 py-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-8 w-8 rounded-lg bg-slate-700 flex items-center justify-center font-bold text-teal-400 text-xs">
+                                            {user.name.charAt(0)}
+                                        </div>
+                                        <div>
+                                            <p className="text-white font-bold">{user.name}</p>
+                                            <p className="text-[10px] text-slate-500">{user.email}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                    <span className={`px-3 py-1 rounded-lg text-[9px] font-black border ${user.active ? 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5' : 'text-rose-400 border-rose-500/20 bg-rose-500/5'}`}>
+                                        {user.active ? 'ACTIVO' : 'SUSPENDIDO'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4">
+                                    <span className={`text-[10px] font-black tracking-widest ${user.plan === 'PREMIUM' ? 'text-amber-500' : 'text-blue-400'}`}>
+                                        {user.plan === 'PREMIUM' ? 'PREMIUM' : 'FREE'}
+                                    </span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                    <div className="flex justify-end gap-2">
+                                        <button onClick={() => openModal(user)} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-[10px] font-bold text-blue-400 border border-slate-700 uppercase">Editar</button>
+                                        <button onClick={() => handleStatusChange(user.id, user.active)} className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700">
+                                            {user.active ? <ShieldAlert size={14} className="text-amber-500"/> : <CheckCircle size={14} className="text-emerald-500"/>}
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* --- MODAL --- */}
+            {showModal && (
+                <div className="fixed inset-0 bg-[#020617]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1e293b] border border-slate-700 w-full max-w-sm rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-black text-white">{selectedUser ? 'Editar Perfil' : 'Nuevo Usuario'}</h2>
+                            <button onClick={() => setShowModal(false)} className="text-slate-500 hover:text-white transition-colors"><X size={20}/></button>
+                        </div>
+                        <form onSubmit={handleSaveUser} className="space-y-4 text-left">
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Nombre</label>
+                                <input className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-sm text-white outline-none focus:border-teal-500" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} required />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Email</label>
+                                <input className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-sm text-white outline-none focus:border-teal-500" type="email" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} required />
+                            </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Plan</label>
+                                    <select className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-xs text-white outline-none focus:border-teal-500 font-bold" value={formData.plan} onChange={(e) => setFormData({...formData, plan: e.target.value})}>
+                                        <option value="BASIC">FREE</option>
+                                        <option value="PREMIUM">PREMIUM</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest ml-1">Clave</label>
+                                    <input className="w-full bg-[#0f172a] border border-slate-700 rounded-xl p-3 text-sm text-white outline-none focus:border-teal-500" type="password" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required={!selectedUser} />
+                                </div>
+                            </div>
+                            <button type="submit" className="w-full bg-teal-600 hover:bg-teal-500 text-white font-black py-4 rounded-xl mt-4 flex items-center justify-center gap-2 transition-all uppercase tracking-widest text-[10px]">
+                                <Save size={16}/> {selectedUser ? 'Actualizar' : 'Registrar'}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
-
-// Componente auxiliar para las cards de estadísticas
-const StatCard = ({ title, value, icon, color }) => (
-    <div className="bg-[#1e293b] p-5 rounded-3xl border border-slate-800 shadow-xl transition-all hover:border-slate-700">
-        <div className="flex justify-between items-start text-left">
-            <div className={`${color} p-3 rounded-2xl`}>{icon}</div>
-            <span className="text-2xl font-black text-white">{value}</span>
-        </div>
-        <p className="text-slate-500 text-[10px] uppercase font-black tracking-widest mt-4 text-left">{title}</p>
-    </div>
-);
 
 export default UserManagement;

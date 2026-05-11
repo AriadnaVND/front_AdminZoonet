@@ -1,45 +1,51 @@
 import Sidebar from '../components/Sidebar';
-import { Outlet } from 'react-router-dom';
-import { Search, Bell, Moon, User } from 'lucide-react';
+import { Outlet, Link } from 'react-router-dom';
+import { Bell, Moon, User } from 'lucide-react';
 
 const MainLayout = () => {
     return (
-        <div className="flex h-screen bg-[#0f172a] overflow-hidden">
+        <div className="flex h-screen bg-[#0f172a] overflow-hidden text-slate-200">
             <Sidebar />
 
             <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Navbar */}
-                <header className="h-20 flex items-center justify-between px-8 text-white">
-                    <div className="relative w-96">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Buscar usuarios, reportes, mascotas..."
-                            className="w-full bg-[#1e293b] border-none rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-teal-500"
-                        />
-                    </div>
-
+                {/* Navbar con fondo diferenciado y borde inferior sutil */}
+                <header className="h-20 flex items-center justify-end px-8 bg-[#0f172a]/50 backdrop-blur-md border-b border-slate-800/50 text-white z-10">
+                    
                     <div className="flex items-center gap-6">
-                        <div className="relative cursor-pointer">
+                        {/* Notificaciones */}
+                        <div className="relative cursor-pointer p-2 hover:bg-slate-800 rounded-lg transition-colors">
                             <Bell size={20} className="text-gray-400" />
-                            <span className="absolute -top-1 -right-1 bg-red-500 text-[10px] w-4 h-4 flex items-center justify-center rounded-full">12</span>
+                            <span className="absolute top-1.5 right-1.5 bg-red-500 text-[10px] w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#0f172a]">
+                                12
+                            </span>
                         </div>
-                        <Moon size={20} className="text-gray-400 cursor-pointer" />
-                        <div className="flex items-center gap-3 pl-6 border-l border-slate-800 cursor-pointer">
-                            <div className="text-right">
-                                <p className="text-sm font-bold">Admin</p>
+                        
+                        {/* Modo Oscuro */}
+                        <div className="p-2 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
+                            <Moon size={20} className="text-gray-400" />
+                        </div>
+                        
+                        {/* ENLACE AL PERFIL */}
+                        <Link 
+                            to="/admin-profile" 
+                            className="flex items-center gap-3 pl-6 border-l border-slate-800 cursor-pointer hover:opacity-80 transition-all group"
+                        >
+                            <div className="text-right hidden sm:block">
+                                <p className="text-sm font-bold group-hover:text-teal-400 transition-colors">Admin</p>
                                 <p className="text-[10px] text-gray-500">Superusuario</p>
                             </div>
-                            <div className="bg-[#1e293b] p-2 rounded-full">
+                            <div className="bg-[#1e293b] p-2 rounded-full group-hover:bg-teal-500/20 group-hover:ring-2 group-hover:ring-teal-500/50 transition-all">
                                 <User size={20} className="text-teal-400" />
                             </div>
-                        </div>
+                        </Link>
                     </div>
                 </header>
 
-                {/* Contenido de la página */}
-                <main className="flex-1 overflow-y-auto p-8 pt-2">
-                    <Outlet />
+                {/* Contenido de la página: Se añade un fondo ligeramente distinto o padding para resaltar las cards */}
+                <main className="flex-1 overflow-y-auto p-8 bg-[#0f172a]">
+                    <div className="max-w-7xl mx-auto">
+                        <Outlet />
+                    </div>
                 </main>
             </div>
         </div>
