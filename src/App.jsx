@@ -12,7 +12,8 @@ import Collares from './components/Collares';
 import IAControl from './pages/IAControl'; 
 import PagosAdmin from './pages/PagosAdmin'; 
 import ReportesMascotas from './pages/ReportesMascotas'; 
-import AdminProfile from './pages/AdminProfile'; // 🆕 Importamos la nueva página de perfil
+import AdminProfile from './pages/AdminProfile'; 
+import AdminCollares from './pages/AdminCollares'; // 🆕 IMPORTAMOS LA NUEVA PÁGINA
 
 // Componente para proteger rutas
 const ProtectedRoute = () => {
@@ -41,8 +42,9 @@ function App() {
             {/* Gestión de IA */}
             <Route path="/ia" element={<IAControl />} />
             
-            {/* Gestión de Collares IoT */}
+            {/* Gestión de Collares IoT (Mantenemos el componente y agregamos la página) */}
             <Route path="/collares" element={<Collares />} />
+            <Route path="/admin-collares" element={<AdminCollares />} /> {/* 🆕 NUEVA RUTA DE PÁGINA */}
             
             {/* Centro de Soporte Técnico */}
             <Route path="/soporte" element={<Soporte />} />
@@ -53,7 +55,7 @@ function App() {
             {/* Reportes de Mascotas Perdidas (lost_pets) */}
             <Route path="/reportes" element={<ReportesMascotas />} />
 
-            {/* 🆕 NUEVA RUTA: Perfil del Administrador */}
+            {/* Perfil del Administrador */}
             <Route path="/admin-profile" element={<AdminProfile />} />
           </Route>
         </Route>
