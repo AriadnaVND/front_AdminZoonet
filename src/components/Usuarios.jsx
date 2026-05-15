@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { userService } from '../api/userService';
 import { 
   ShieldAlert, CheckCircle, Users, Crown, 
-  Plus, X, Save, Search, Activity, Zap
+  Plus, X, Save, Search, Activity, Zap, Eye
 } from 'lucide-react';
 
 const UserManagement = () => {
@@ -12,6 +12,10 @@ const UserManagement = () => {
     const [filterPlan, setFilterPlan] = useState('ALL'); 
     
     const [showModal, setShowModal] = useState(false);
+    // NUEVOS ESTADOS PARA LA VISTA DE DETALLES
+    const [showViewModal, setShowViewModal] = useState(false);
+    const [viewingUser, setViewingUser] = useState(null);
+
     const [selectedUser, setSelectedUser] = useState(null);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', plan: 'BASIC', active: true });
 
@@ -79,6 +83,12 @@ const UserManagement = () => {
         setShowModal(true);
     };
 
+    // FUNCIÓN PARA ABRIR LA VISTA DE DETALLES
+    const openViewModal = (user) => {
+        setViewingUser(user);
+        setShowViewModal(true);
+    };
+
     const handleSaveUser = async (e) => {
         e.preventDefault();
         try {
@@ -99,7 +109,7 @@ const UserManagement = () => {
     return (
         <div className="p-6 space-y-6 animate-in fade-in duration-500 bg-[#0f172a] min-h-screen text-slate-200">
             
-            {/* --- HEADER (Estilo Imagen 3) --- */}
+            {/* --- HEADER --- */}
             <div className="flex justify-between items-start">
                 <div>
                     <h1 className="text-2xl font-bold text-white tracking-tight">Gestión de Usuarios</h1>
@@ -114,7 +124,7 @@ const UserManagement = () => {
                 </div>
             </div>
 
-            {/* --- STATS CARDS (Estilo Compacto Imagen 2) --- */}
+            {/* --- STATS CARDS --- */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm">
                     <div className="bg-amber-500/10 p-2 rounded-lg w-fit mb-3"><Crown className="text-amber-500" size={20}/></div>
@@ -135,7 +145,6 @@ const UserManagement = () => {
                     <div className="absolute bottom-0 left-0 w-full bg-emerald-500 h-0.5 opacity-50"></div>
                 </div>
 
-                {/* BOTÓN AGREGAR USUARIO (Estilo Imagen 2) */}
                 <button 
                     onClick={() => openModal()} 
                     className="bg-[#1e293b]/30 border-2 border-dashed border-teal-500/30 hover:border-teal-500/60 p-5 rounded-2xl flex flex-col justify-center items-center gap-2 transition-all group active:scale-95"
@@ -205,6 +214,10 @@ const UserManagement = () => {
                                 </td>
                                 <td className="px-6 py-4 text-right">
                                     <div className="flex justify-end gap-2">
+                                        {/* NUEVO BOTÓN VER */}
+                                        <button onClick={() => openViewModal(user)} className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 text-teal-500">
+                                            <Eye size={14}/>
+                                        </button>
                                         <button onClick={() => openModal(user)} className="px-3 py-1 bg-slate-800 hover:bg-slate-700 rounded-lg text-[10px] font-bold text-blue-400 border border-slate-700 uppercase">Editar</button>
                                         <button onClick={() => handleStatusChange(user.id, user.active)} className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700">
                                             {user.active ? <ShieldAlert size={14} className="text-amber-500"/> : <CheckCircle size={14} className="text-emerald-500"/>}
@@ -217,7 +230,56 @@ const UserManagement = () => {
                 </table>
             </div>
 
-            {/* --- MODAL --- */}
+            {/* --- NUEVO MODAL DE VISTA (SOLO LECTURA) --- */}
+            {showViewModal && viewingUser && (
+                <div className="fixed inset-0 bg-[#020617]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1e293b] border border-slate-700 w-full max-w-sm rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-black text-white">Detalles del Usuario</h2>
+                            <button onClick={() => setShowViewModal(false)} className="text-slate-500 hover:text-white transition-colors"><X size={20}/></button>
+                        </div>
+                        <div className="space-y-6">
+                            <div className="flex flex-col items-center gap-2 pb-4 border-b border-slate-800">
+                                <div className="h-16 w-16 rounded-2xl bg-teal-500/10 border border-teal-500/20 flex items-center justify-center font-black text-teal-400 text-2xl">
+                                    {viewingUser.name.charAt(0)}
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-white font-black text-lg uppercase tracking-tight">{viewingUser.name}</p>
+                                    <p className="text-xs text-slate-500">{viewingUser.email}</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">ID Único</p>
+                                    <p className="text-white font-mono text-xs">#{viewingUser.id}</p>
+                                </div>
+                                <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Suscripción</p>
+                                    <p className={`text-xs font-black ${viewingUser.plan === 'PREMIUM' ? 'text-amber-500' : 'text-blue-400'}`}>
+                                        {viewingUser.plan}
+                                    </p>
+                                </div>
+                                <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800 col-span-2">
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Estado del Sistema</p>
+                                    <div className="flex items-center gap-2">
+                                        <div className={`h-2 w-2 rounded-full animate-pulse ${viewingUser.active ? 'bg-emerald-500' : 'bg-rose-500'}`}></div>
+                                        <p className={`text-xs font-bold ${viewingUser.active ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                            {viewingUser.active ? 'OPERATIVO / ACTIVO' : 'SUSPENDIDO / INACTIVO'}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button onClick={() => setShowViewModal(false)} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-black py-4 rounded-xl mt-4 transition-all uppercase tracking-widest text-[10px] border border-slate-700">
+                                Cerrar Vista
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* --- MODAL EDITAR/REGISTRAR (TU MODAL ORIGINAL) --- */}
             {showModal && (
                 <div className="fixed inset-0 bg-[#020617]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
                     <div className="bg-[#1e293b] border border-slate-700 w-full max-w-sm rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200">

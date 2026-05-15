@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api/axios';
-import { MapPin, Clock, Calendar, AlertCircle, Loader2, CheckCircle2, ClipboardList, Eye } from 'lucide-react';
+import { MapPin, Clock, Calendar, AlertCircle, Loader2, CheckCircle2, ClipboardList, Eye, X } from 'lucide-react';
 
 const ReportesMascotas = () => {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // --- NUEVOS ESTADOS PARA EL MODAL ---
+    const [showModal, setShowModal] = useState(false);
+    const [selectedReport, setSelectedReport] = useState(null);
 
     useEffect(() => {
         const fetchLostPets = async () => {
@@ -19,6 +23,12 @@ const ReportesMascotas = () => {
         };
         fetchLostPets();
     }, []);
+
+    // --- FUNCIÓN PARA ABRIR DETALLES ---
+    const handleViewDetails = (report) => {
+        setSelectedReport(report);
+        setShowModal(true);
+    };
 
     if (loading) return (
         <div className="flex flex-col items-center justify-center p-20 text-teal-400">
@@ -35,18 +45,11 @@ const ReportesMascotas = () => {
                 <p className="text-slate-400 mt-1">Administra reportes de mascotas perdidas, encontradas y avistamientos</p>
             </div>
 
-            {/* CARDS DE RESUMEN (Estilo Figma) */}
+            {/* CARDS DE RESUMEN */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Total de reportes en BD */}
                 <SummaryCard title="Reportes Activos" value={reports.length} color="text-teal-400" bg="bg-teal-400/10" icon={<ClipboardList/>} />
-                
-                {/* Los que aún no se encuentran */}
                 <SummaryCard title="Perdidas" value={reports.filter(r => !r.found).length} color="text-red-400" bg="bg-red-400/10" icon={<AlertCircle/>} />
-                
-                {/* Los que ya marcaste como encontrados en BD */}
                 <SummaryCard title="Encontradas" value={reports.filter(r => r.found).length} color="text-green-400" bg="bg-green-400/10" icon={<CheckCircle2/>} />
-                
-                {/* EL "3" ACORDADO XD */}
                 <SummaryCard title="Resueltos (30d)" value="3" color="text-blue-400" bg="bg-blue-400/10" icon={<CheckCircle2/>} />
             </div>
 
@@ -75,7 +78,6 @@ const ReportesMascotas = () => {
                             {reports.map((r) => (
                                 <tr key={r.id} className="hover:bg-slate-800/40 transition-all text-white group">
                                     <td className="px-6 py-5 font-mono text-teal-400 text-xs font-bold">RPT-00{r.id}</td>
-                                    
                                     <td className="px-6 py-5">
                                         <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
                                             <MapPin size={14} className="text-red-400" />
@@ -85,11 +87,9 @@ const ReportesMascotas = () => {
                                             LAT: {r.lastSeenLatitude?.toFixed(4) || "---"} | LON: {r.lastSeenLongitude?.toFixed(4) || "---"}
                                         </div>
                                     </td>
-
                                     <td className="px-6 py-5 text-xs text-slate-300 max-w-xs italic">
                                         "{r.description || "Sin descripción adicional"}"
                                     </td>
-
                                     <td className="px-6 py-5">
                                         <div className="flex flex-col gap-1">
                                             <div className="flex items-center gap-1 text-orange-400 text-[10px] font-bold">
@@ -100,22 +100,23 @@ const ReportesMascotas = () => {
                                             </span>
                                         </div>
                                     </td>
-
                                     <td className="px-6 py-5">
                                         <span className="bg-slate-800 px-3 py-1.5 rounded-xl text-[10px] font-black border border-slate-700 text-slate-300">
                                             #PET-{r.petId}
                                         </span>
                                     </td>
-
                                     <td className="px-6 py-5 text-sm text-slate-400">
                                         <div className="flex items-center gap-1 text-xs">
                                             <Calendar size={13} className="text-slate-500" />
                                             {r.reportDate ? new Date(r.reportDate).toLocaleDateString() : '---'}
                                         </div>
                                     </td>
-
                                     <td className="px-6 py-5 text-center">
-                                        <button className="p-2 hover:bg-slate-700 rounded-xl transition-all text-slate-400 hover:text-white flex items-center gap-2 mx-auto border border-transparent hover:border-slate-600">
+                                        {/* --- BOTÓN ACTUALIZADO CON handleViewDetails --- */}
+                                        <button 
+                                            onClick={() => handleViewDetails(r)}
+                                            className="p-2 hover:bg-slate-700 rounded-xl transition-all text-slate-400 hover:text-white flex items-center gap-2 mx-auto border border-transparent hover:border-slate-600"
+                                        >
                                             <Eye size={16} />
                                             <span className="text-[10px] font-bold">Ver</span>
                                         </button>
@@ -131,11 +132,66 @@ const ReportesMascotas = () => {
                     </div>
                 )}
             </div>
+
+            {/* --- MODAL DE DETALLE (Zoonet Style) --- */}
+            {showModal && selectedReport && (
+                <div className="fixed inset-0 bg-[#020617]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1e293b] border border-slate-700 w-full max-w-lg rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200 text-left">
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-black text-white flex items-center gap-2">
+                                <ClipboardList className="text-teal-400" /> Expediente RPT-00{selectedReport.id}
+                            </h2>
+                            <button onClick={() => setShowModal(false)} className="text-slate-500 hover:text-white transition-colors">
+                                <X size={20}/>
+                            </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4">
+                                <DetailItem label="Ubicación" value={selectedReport.lastSeenLocation} icon={<MapPin className="text-red-400" size={14}/>}/>
+                                <DetailItem label="Coordenadas" value={`${selectedReport.lastSeenLatitude}, ${selectedReport.lastSeenLongitude}`} icon={<Activity className="text-teal-400" size={14}/>}/>
+                                <DetailItem label="Fecha del Reporte" value={new Date(selectedReport.reportDate).toLocaleString()} icon={<Calendar className="text-blue-400" size={14}/>}/>
+                            </div>
+                            <div className="space-y-4">
+                                <DetailItem label="Mascota ID" value={`#PET-${selectedReport.petId}`} icon={<CheckCircle2 className="text-orange-400" size={14}/>}/>
+                                <DetailItem label="Tiempo Transcurrido" value={`${selectedReport.hoursLost} horas`} icon={<Clock className="text-amber-400" size={14}/>}/>
+                                <div>
+                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Estado Actual</p>
+                                    <span className={`px-4 py-1.5 rounded-xl text-xs font-black border ${selectedReport.found ? 'text-green-400 border-green-500/20 bg-green-500/5' : 'text-red-400 border-red-500/20 bg-red-500/5'}`}>
+                                        {selectedReport.found ? 'LOCALIZADA / RESUELTO' : 'EN BÚSQUEDA ACTIVA'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="col-span-1 md:col-span-2 bg-[#0f172a] p-4 rounded-2xl border border-slate-800">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Relato del Suceso</p>
+                                <p className="text-slate-300 text-sm italic leading-relaxed">"{selectedReport.description || "Sin detalles adicionales proporcionados."}"</p>
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => setShowModal(false)}
+                            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-black py-4 rounded-xl mt-8 transition-all uppercase tracking-widest text-[10px]"
+                        >
+                            Cerrar Expediente
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
 
-// Componente para las Cards de resumen
+// Componente auxiliar para el Modal
+const DetailItem = ({ label, value, icon }) => (
+    <div>
+        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">{label}</p>
+        <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800 flex items-center gap-2">
+            {icon}
+            <span className="text-white text-xs font-medium">{value || "---"}</span>
+        </div>
+    </div>
+);
+
 const SummaryCard = ({ title, value, color, bg, icon }) => (
     <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800 flex justify-between items-start transition-all hover:border-slate-700 shadow-lg">
         <div>
@@ -146,6 +202,11 @@ const SummaryCard = ({ title, value, color, bg, icon }) => (
             {React.cloneElement(icon, { size: 24 })}
         </div>
     </div>
+);
+
+// Icono extra para el modal
+const Activity = ({ size, className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
 );
 
 export default ReportesMascotas;

@@ -5,10 +5,7 @@ import {
     Clock, 
     CheckCircle2, 
     AlertCircle, 
-    Search, 
-    MoreHorizontal, 
     Loader2,
-    Calendar,
     BellRing,
     X
 } from 'lucide-react';
@@ -17,7 +14,7 @@ const Soporte = () => {
     const [tickets, setTickets] = useState([]);
     const [loading, setLoading] = useState(true);
     
-    // ESTADOS PARA EL MODAL (LA PANTALLITA)
+    // ESTADOS PARA EL MODAL
     const [selectedTicket, setSelectedTicket] = useState(null);
     const [showModal, setShowModal] = useState(false);
 
@@ -34,14 +31,11 @@ const Soporte = () => {
 
     useEffect(() => { loadTickets(); }, []);
 
-    // ESTA FUNCIÓN SE ACTIVA AL DAR CLICK EN EL BOTÓN VERDE DEL MODAL
     const handleNotifyAndResolve = async () => {
         try {
-            // Llamamos al endpoint que inserta en la tabla 'notifications' y cierra el ticket
             await api.post(`/admin/support/tickets/${selectedTicket.id}/resolve-and-notify`);
-            
-            setShowModal(false); // Cerramos la pantallita
-            loadTickets();       // Refrescamos la tabla principal
+            setShowModal(false);
+            loadTickets();
             alert("Notificación enviada al usuario y ticket cerrado.");
         } catch (err) {
             console.error("Error al procesar:", err);
@@ -106,11 +100,13 @@ const Soporte = () => {
                                         </span>
                                     </td>
                                     <td className="px-6 py-5 text-center">
+                                        {/* --- CAMBIO: Botón más descriptivo --- */}
                                         <button 
                                             onClick={() => { setSelectedTicket(t); setShowModal(true); }}
-                                            className="p-2 hover:bg-slate-700 rounded-xl transition-all text-slate-400 hover:text-white flex items-center justify-center mx-auto"
+                                            className="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-all text-teal-400 hover:text-white flex items-center gap-2 mx-auto border border-slate-700 hover:border-teal-500/50 group/btn"
                                         >
-                                            <MoreHorizontal size={18} />
+                                            <BellRing size={16} className="group-hover/btn:animate-bounce" />
+                                            <span className="text-[10px] font-bold uppercase tracking-wider">Notificar</span>
                                         </button>
                                     </td>
                                 </tr>
@@ -120,7 +116,7 @@ const Soporte = () => {
                 </div>
             </div>
 
-            {/* --- LA PANTALLITA (MODAL DE ACCIÓN) --- */}
+            {/* --- MODAL DE ACCIÓN --- */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
                     <div className="bg-[#1e293b] border border-slate-700 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in duration-200">
@@ -157,7 +153,6 @@ const Soporte = () => {
     );
 };
 
-// Componente Card
 const StatusCard = ({ title, value, icon, iconColor }) => (
     <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800 flex items-center justify-between">
         <div>
