@@ -1,225 +1,128 @@
 import React, { useEffect, useState } from 'react';
-import { getAllPosts, deletePost } from '../api/communityService';
-import {
-    Heart,
-    MessageCircle,
-    Share2,
-    Trash2,
-    BrainCircuit,
-    MessageSquare,
-    Clock,
-    Shield,
-    X,
-    AlertCircle
-} from 'lucide-react';
+import { getAllPosts } from '../api/communityService';
+import adminApi from '../api/adminApi'; 
+import { Clock, ShieldCheck, Heart, MessageCircle, Share2, ClipboardList, AlertCircle, CheckCircle2, CheckSquare } from 'lucide-react';
+
+// --- COMPONENTE AUXILIAR ---
+const StatsCard = ({ title, value, icon: Icon, colorClass }) => (
+    <div className="bg-[#1e293b] p-6 rounded-2xl border border-slate-700/50 flex justify-between items-center shadow-lg hover:border-slate-600 transition-all">
+        <div>
+            <p className="text-[10px] text-slate-400 font-black uppercase tracking-[0.2em]">{title}</p>
+            <h3 className="text-3xl font-black text-white mt-1">{value}</h3>
+        </div>
+        <div className={`p-3 rounded-xl bg-opacity-10 ${colorClass.bg} ${colorClass.text}`}>
+            <Icon size={24} />
+        </div>
+    </div>
+);
 
 const Comunidad = () => {
     const [posts, setPosts] = useState([]);
+    const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
-    
-    // Estados para el Modal de Confirmación
-    const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-    const [postToDelete, setPostToDelete] = useState(null);
 
     useEffect(() => {
-        loadPosts();
+        loadData();
     }, []);
 
-    const loadPosts = async () => {
+    const loadData = async () => {
+        setLoading(true);
         try {
-            const response = await getAllPosts();
-            const dataWithImages = response.data
-                .slice(0, 3) 
-                .map((p, index) => ({
-                    ...p,
-                    imageUrl: `https://placedog.net/1000/600?id=${index + 10}`,
-                    likes: Math.floor(Math.random() * 50) + 10,
-                    comments: Math.floor(Math.random() * 20) + 5,
-                    shares: Math.floor(Math.random() * 10) + 2,
-                    iaScore: Math.floor(Math.random() * 5) + 2
-                }));
-            setPosts(dataWithImages);
+            const [postsRes, logsRes] = await Promise.all([
+                getAllPosts(), 
+                adminApi.get('/admin/moderacion/pendientes').catch(() => ({ data: [] }))
+            ]);
+
+            const rawData = Array.isArray(postsRes.data) ? postsRes.data : [];
+            const logsData = Array.isArray(logsRes.data) ? logsRes.data : [];
+            setLogs(logsData);
+
+            const baseUrl = "http://localhost:8081";
+            const data = rawData.map(p => ({
+                id: p.id,
+                authorUsername: p.user?.name || 'Anónimo', 
+                content: p.description || 'Sin descripción',
+                imageUrl: p.imageUrl ? `${baseUrl}${p.imageUrl}` : 'https://via.placeholder.com/1000x600',
+                createdAt: p.createdAt || 'Fecha no disponible',
+                // IMPORTANTE: Asegúrate de mapear el tipo de post si tu backend lo envía
+                postType: p.postType || 'UNKNOWN' 
+            }));
+            setPosts(data);
         } catch (error) {
-            console.error("Error cargando posts", error);
+            console.error("Error cargando datos:", error);
         } finally {
             setLoading(false);
         }
     };
 
-    // Abre el modal en lugar de usar window.confirm
-    const openDeleteModal = (postId) => {
-        setPostToDelete(postId);
-        setIsConfirmOpen(true);
-    };
-
-    const confirmDelete = async () => {
-        if (!postToDelete) return;
-        try {
-            await deletePost(postToDelete);
-            setPosts(posts.filter(p => p.id !== postToDelete));
-            setIsConfirmOpen(false);
-            setPostToDelete(null);
-        } catch {
-            alert("Error al eliminar");
-        }
-    };
-
-    const totalPosts = posts.length;
-    const engagement = posts.reduce((sum, p) => sum + p.likes + p.comments, 0);
-
-    if (loading) return <div className="p-10 text-teal-400 font-bold animate-pulse text-center">Cargando Comunidad...</div>;
+    if (loading) return <div className="p-10 text-teal-400 text-center font-bold">Sincronizando con el sistema de IA...</div>;
 
     return (
-        <div className="relative space-y-10 animate-in fade-in duration-500 bg-[#0f172a] p-6 md:p-10 min-h-screen text-left">
+        <div className="bg-[#0f172a] p-10 min-h-screen text-left">
+            <h1 className="text-3xl font-black text-white mb-2">Gestión de Comunidad con IA</h1>
+            <p className="text-slate-500 mb-10">Monitoreo en tiempo real de publicaciones y validación automática.</p>
             
-            {/* MODAL DE CONFIRMACIÓN PERSONALIZADO */}
-            {isConfirmOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-[#1e293b] border border-slate-700 w-full max-w-sm rounded-[2rem] shadow-2xl overflow-hidden p-8 text-center space-y-6">
-                        <div className="bg-rose-500/10 text-rose-500 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
-                            <AlertCircle size={32} />
-                        </div>
-                        
-                        <div>
-                            <h3 className="text-white text-xl font-black">¿Eliminar publicación?</h3>
-                            <p className="text-slate-400 mt-2 text-sm">Esta acción no se puede deshacer y el contenido desaparecerá del feed.</p>
-                        </div>
-
-                        <div className="flex gap-3 pt-2">
-                            <button 
-                                onClick={() => setIsConfirmOpen(false)}
-                                className="flex-1 px-6 py-3 rounded-2xl bg-slate-800 text-slate-300 font-bold hover:bg-slate-700 transition-all"
-                            >
-                                Cancelar
-                            </button>
-                            <button 
-                                onClick={confirmDelete}
-                                className="flex-1 px-6 py-3 rounded-2xl bg-rose-500 text-white font-black shadow-lg shadow-rose-500/20 hover:bg-rose-600 transition-all"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* ENCABEZADO */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div>
-                    <h1 className="text-4xl font-black text-white tracking-tight">Gestión de Comunidad con IA</h1>
-                    <p className="text-slate-500 font-medium mt-2">
-                        Supervisión en tiempo real de la actividad social y seguridad de contenidos.
-                    </p>
-                </div>
-                
-                <div className="bg-[#1e293b] border border-slate-800 px-5 py-2 rounded-full flex items-center gap-3 shadow-lg shadow-black/20">
-                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#22c55e]"></div>
-                    <span className="text-[11px] font-black text-white uppercase tracking-[0.2em]">IA Moderando en vivo</span>
-                </div>
+            {/* CUADRITOS DE ESTADÍSTICAS */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                <StatsCard title="Total Publicaciones" value={posts.length} icon={ClipboardList} colorClass={{bg:'bg-teal-500/10', text:'text-teal-500'}} />
+                <StatsCard title="Perdidas" value={posts.filter(p => p.postType === 'LOST_ALERT').length} icon={AlertCircle} colorClass={{bg:'bg-rose-500/10', text:'text-rose-500'}} />
+                <StatsCard title="Encontradas" value={posts.filter(p => p.postType === 'FOUND_ALERT').length} icon={CheckCircle2} colorClass={{bg:'bg-emerald-500/10', text:'text-emerald-500'}} />
+                <StatsCard title="Resueltos (30D)" value={logs.filter(l => l.status === 'APPROVED').length} icon={CheckSquare} colorClass={{bg:'bg-blue-500/10', text:'text-blue-500'}} />
             </div>
-
-            {/* GRID MÉTRICAS */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard icon={<MessageSquare size={18} />} label="Publicaciones" value={totalPosts} color="teal" />
-                <MetricCard icon={<BrainCircuit size={18} />} label="Moderadas x IA" value="98%" color="blue" />
-                <MetricCard icon={<Shield size={18} />} label="Estado" value="Seguro" color="green" />
-                <MetricCard icon={<Heart size={18} />} label="Interacciones" value={engagement} color="rose" />
-            </div>
-
-            {/* FEED */}
+            
             <div className="max-w-5xl mx-auto space-y-10">
-                <div className="flex items-center gap-4 px-4">
-                    <div className="h-[1px] flex-grow bg-slate-800"></div>
-                    <h3 className="text-slate-500 font-black text-xs uppercase tracking-[0.4em]">Feed Reciente</h3>
-                    <div className="h-[1px] flex-grow bg-slate-800"></div>
-                </div>
-                
-                {posts.map(post => (
-                    <article key={post.id} className="group bg-[#1e293b] rounded-[2.5rem] border border-slate-800 overflow-hidden shadow-2xl transition-all hover:border-teal-500/30">
-                        <div className="p-8 flex justify-between items-center">
-                            <div className="flex items-center gap-5 text-left">
-                                <div className="relative">
-                                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-teal-400 to-blue-600 flex items-center justify-center text-white font-black text-2xl">
-                                        {post.authorUsername?.charAt(0).toUpperCase()}
+                {posts.map(post => {
+                    const moderation = logs.find(log => log.postId === post.id);
+                    return (
+                        <article key={post.id} className="group bg-[#1e293b] rounded-[2.5rem] border border-slate-800 shadow-2xl relative overflow-hidden transition-all hover:border-slate-700">
+                            <div className="p-8">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 rounded-2xl bg-teal-500 flex items-center justify-center text-white font-black text-xl shadow-lg shadow-teal-500/20">
+                                            {post.authorUsername.charAt(0).toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <h4 className="text-white font-bold text-lg">@{post.authorUsername}</h4>
+                                            <p className="text-slate-500 text-xs flex items-center gap-1"><Clock size={12} /> {post.createdAt}</p>
+                                        </div>
                                     </div>
-                                    <div className="absolute -bottom-1 -right-1 bg-[#2dd4bf] w-5 h-5 rounded-full border-4 border-[#1e293b]"></div>
-                                </div>
-                                <div>
-                                    <h4 className="text-white text-xl font-bold">@{post.authorUsername}</h4>
-                                    <p className="text-slate-500 text-sm flex items-center gap-2">
-                                        <Clock size={14} /> {post.createdAt || 'Justo ahora'}
-                                    </p>
-                                </div>
-                            </div>
-                            <button 
-                                onClick={() => openDeleteModal(post.id)} 
-                                className="text-slate-600 hover:text-rose-500 p-3 rounded-2xl transition-all hover:bg-rose-500/10"
-                            >
-                                <Trash2 size={22} />
-                            </button>
-                        </div>
 
-                        <div className="px-10 pb-6 text-left">
-                            <p className="text-slate-200 text-lg leading-relaxed">{post.content}</p>
-                        </div>
-
-                        <div className="px-6 pb-6">
-                            <div className="relative rounded-[2.5rem] overflow-hidden">
-                                <img src={post.imageUrl} alt="post" className="w-full h-[500px] object-cover transition-transform duration-1000 group-hover:scale-105" />
-                                <div className="absolute top-6 right-6 bg-black/60 backdrop-blur-md border border-white/10 px-5 py-2.5 rounded-2xl flex items-center gap-3">
-                                    <BrainCircuit size={18} className="text-teal-400" />
-                                    <span className="text-white text-xs font-black uppercase tracking-wider">Seguridad IA: {post.iaScore}%</span>
+                                    {/* BADGES DINÁMICOS DE IA */}
+                                    {moderation ? (
+                                        <div className="flex gap-2">
+                                            <span className="flex items-center gap-1.5 bg-emerald-500/10 text-emerald-500 px-3 py-1.5 rounded-full text-[10px] font-bold border border-emerald-500/20">
+                                                <ShieldCheck size={14} />
+                                                IA: {(moderation.aiScore * 100).toFixed(0)}%
+                                            </span>
+                                            <span className={`px-3 py-1.5 rounded-full text-[10px] font-bold border uppercase ${
+                                                moderation.status === 'APPROVED' 
+                                                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' 
+                                                : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                                            }`}>
+                                                {moderation.status}
+                                            </span>
+                                        </div>
+                                    ) : (
+                                        <span className="flex items-center gap-1.5 bg-slate-800 text-slate-400 px-3 py-1.5 rounded-full text-[10px] font-bold border border-slate-700">
+                                            <AlertCircle size={14} /> Procesando IA...
+                                        </span>
+                                    )}
                                 </div>
-                            </div>
-                        </div>
 
-                        <div className="px-10 py-8 bg-slate-900/50 border-t border-slate-800 flex justify-between items-center">
-                            <div className="flex gap-10">
-                                <ActionBtn icon={<Heart size={24}/>} count={post.likes} color="rose" />
-                                <ActionBtn icon={<MessageCircle size={24}/>} count={post.comments} color="teal" />
-                                <ActionBtn icon={<Share2 size={24}/>} count={post.shares} color="blue" />
+                                <p className="text-slate-200 text-lg mb-6">{post.content}</p>
+                                <img src={post.imageUrl} alt="post" className="w-full h-[400px] object-cover rounded-3xl" />
                             </div>
-                            <div className="bg-teal-500/10 text-teal-400 px-6 py-2 rounded-2xl text-xs font-black uppercase tracking-widest border border-teal-500/20">
-                                Verificado por Zoonet
+                            
+                            <div className="px-10 py-6 bg-slate-900/50 rounded-b-[2.5rem] flex gap-8">
+                                <button className="flex items-center gap-2 text-rose-500 transition-transform hover:scale-105"><Heart size={20} /> 0</button>
+                                <button className="flex items-center gap-2 text-teal-400 transition-transform hover:scale-105"><MessageCircle size={20} /> 0</button>
+                                <button className="flex items-center gap-2 text-blue-400 transition-transform hover:scale-105"><Share2 size={20} /> 0</button>
                             </div>
-                        </div>
-                    </article>
-                ))}
+                        </article>
+                    );
+                })}
             </div>
         </div>
-    );
-};
-
-const MetricCard = ({ icon, label, value, color }) => {
-    const theme = {
-        teal: "text-teal-400 bg-teal-400/10 border-teal-500/20",
-        blue: "text-blue-400 bg-blue-400/10 border-blue-500/20",
-        green: "text-green-500 bg-green-500/10 border-green-500/20",
-        rose: "text-rose-400 bg-rose-400/10 border-rose-500/20",
-    };
-    return (
-        <div className="bg-[#1e293b] p-8 rounded-[2rem] border border-slate-800 flex flex-col items-center justify-center space-y-4 hover:border-slate-700 transition-colors shadow-lg">
-            <div className={`p-3 rounded-2xl ${theme[color]}`}>
-                {icon}
-            </div>
-            <div className="text-center">
-                <h2 className="text-3xl font-black text-white">{value}</h2>
-                <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest mt-1">{label}</p>
-            </div>
-        </div>
-    );
-};
-
-const ActionBtn = ({ icon, count, color }) => {
-    const hoverColors = {
-        rose: "hover:text-rose-500 hover:bg-rose-500/10",
-        teal: "hover:text-teal-400 hover:bg-teal-400/10",
-        blue: "hover:text-blue-500 hover:bg-blue-500/10",
-    };
-    return (
-        <button className={`flex items-center gap-3 text-slate-500 transition-all px-4 py-2 rounded-xl ${hoverColors[color]}`}>
-            {icon} <span className="font-bold text-lg">{count}</span>
-        </button>
     );
 };
 
