@@ -1,6 +1,6 @@
 import Sidebar from '../components/Sidebar';
 import { Outlet, Link } from 'react-router-dom';
-import { Bell, Moon, User } from 'lucide-react';
+import { User } from 'lucide-react';
 
 const MainLayout = () => {
     return (
@@ -12,19 +12,6 @@ const MainLayout = () => {
                 <header className="h-20 flex items-center justify-end px-8 bg-[#0f172a]/50 backdrop-blur-md border-b border-slate-800/50 text-white z-10">
                     
                     <div className="flex items-center gap-6">
-                        {/* Notificaciones */}
-                        <div className="relative cursor-pointer p-2 hover:bg-slate-800 rounded-lg transition-colors">
-                            <Bell size={20} className="text-gray-400" />
-                            <span className="absolute top-1.5 right-1.5 bg-red-500 text-[10px] w-4 h-4 flex items-center justify-center rounded-full border-2 border-[#0f172a]">
-                                12
-                            </span>
-                        </div>
-                        
-                        {/* Modo Oscuro */}
-                        <div className="p-2 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer">
-                            <Moon size={20} className="text-gray-400" />
-                        </div>
-                        
                         {/* ENLACE AL PERFIL */}
                         <Link 
                             to="/admin-profile" 
@@ -41,7 +28,7 @@ const MainLayout = () => {
                     </div>
                 </header>
 
-                {/* Contenido de la página: Se añade un fondo ligeramente distinto o padding para resaltar las cards */}
+                {/* Contenido de la página */}
                 <main className="flex-1 overflow-y-auto p-8 bg-[#0f172a]">
                     <div className="max-w-7xl mx-auto">
                         <Outlet />

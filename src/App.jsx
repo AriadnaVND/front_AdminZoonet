@@ -1,19 +1,17 @@
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import Login from './pages/Login';
-import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Usuarios from './components/Usuarios';
 import Comunidad from './components/Comunidad';
 import MainLayout from './layouts/MainLayout';
 
-// 1. IMPORTACIÓN DE COMPONENTES REALES CONECTADOS
+// Importación de componentes reales conectados (Se eliminó IAControl y Register)
 import Soporte from './pages/Soporte'; 
 import Collares from './components/Collares'; 
-import IAControl from './pages/IAControl'; 
 import PagosAdmin from './pages/PagosAdmin'; 
 import ReportesMascotas from './pages/ReportesMascotas'; 
 import AdminProfile from './pages/AdminProfile'; 
-import AdminCollares from './pages/AdminCollares'; // 🆕 IMPORTAMOS LA NUEVA PÁGINA
+import AdminCollares from './pages/AdminCollares'; 
 
 // Componente para proteger rutas
 const ProtectedRoute = () => {
@@ -28,9 +26,8 @@ function App() {
         {/* Redirección raíz */}
         <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* Rutas Públicas */}
+        {/* Rutas Públicas (Se eliminó /register) */}
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
 
         {/* Rutas Privadas (Protegidas) */}
         <Route element={<ProtectedRoute />}>
@@ -39,12 +36,9 @@ function App() {
             <Route path="/usuarios" element={<Usuarios />} />
             <Route path="/comunidad" element={<Comunidad />} />
             
-            {/* Gestión de IA */}
-            <Route path="/ia" element={<IAControl />} />
-            
-            {/* Gestión de Collares IoT (Mantenemos el componente y agregamos la página) */}
+            {/* Gestión de Collares IoT */}
             <Route path="/collares" element={<Collares />} />
-            <Route path="/admin-collares" element={<AdminCollares />} /> {/* 🆕 NUEVA RUTA DE PÁGINA */}
+            <Route path="/admin-collares" element={<AdminCollares />} /> 
             
             {/* Centro de Soporte Técnico */}
             <Route path="/soporte" element={<Soporte />} />

@@ -1,8 +1,8 @@
-import { useState } from 'react'; // Importamos useState
+import { useState } from 'react'; 
 import {
     LayoutDashboard, Users, CreditCard, MessageSquare,
-    BrainCircuit, Radio, FileText, Headphones, LogOut, PawPrint, AlertCircle
-} from 'lucide-react';
+    Radio, FileText, Headphones, LogOut, PawPrint, AlertCircle
+} from 'lucide-react'; // Se eliminó BrainCircuit
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Sidebar = () => {
@@ -12,12 +12,12 @@ const Sidebar = () => {
     // Estado para controlar el Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Se eliminó la opción de IA de este arreglo
     const menuItems = [
         { icon: <LayoutDashboard size={20} />, label: 'Dashboard', path: '/dashboard' },
         { icon: <Users size={20} />, label: 'Usuarios', path: '/usuarios' },
         { icon: <CreditCard size={20} />, label: 'Pagos', path: '/pagos' },
         { icon: <MessageSquare size={20} />, label: 'Comunidad', path: '/comunidad' },
-        { icon: <BrainCircuit size={20} />, label: 'IA', path: '/ia' },
         { icon: <Radio size={20} />, label: 'Collares', path: '/collares' },
         { icon: <FileText size={20} />, label: 'Reportes', path: '/reportes' },
         { icon: <Headphones size={20} />, label: 'Soporte', path: '/soporte' },
@@ -64,7 +64,7 @@ const Sidebar = () => {
                 {/* Footer Sidebar */}
                 <div className="p-4 border-t border-slate-800">
                     <button 
-                        onClick={() => setIsModalOpen(true)} // Abrir el modal
+                        onClick={() => setIsModalOpen(true)} 
                         className="flex items-center gap-3 px-4 py-3 w-full text-gray-400 hover:text-red-400 transition-colors group"
                     >
                         <LogOut size={20} className="group-hover:rotate-12 transition-transform" />
@@ -73,7 +73,7 @@ const Sidebar = () => {
                 </div>
             </div>
 
-            {/* MODAL DE CONFIRMACIÓN (Diseño según la segunda imagen) */}
+            {/* MODAL DE CONFIRMACIÓN */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl transform transition-all flex flex-col items-center text-center">
@@ -96,7 +96,7 @@ const Sidebar = () => {
                                 Sí, cerrar sesión
                             </button>
                             <button 
-                                onClick={() => setIsModalOpen(false)} // Cerrar el modal sin hacer nada
+                                onClick={() => setIsModalOpen(false)} 
                                 className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors"
                             >
                                 Cancelar

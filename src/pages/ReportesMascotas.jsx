@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import api from '../api/axios';
-import { MapPin, Clock, Calendar, AlertCircle, Loader2, CheckCircle2, ClipboardList, Eye, X } from 'lucide-react';
+import { MapPin, Clock, Calendar, AlertCircle, Loader2, CheckCircle2, ClipboardList, Eye, X, Activity } from 'lucide-react';
 
 const ReportesMascotas = () => {
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
-
-    // --- NUEVOS ESTADOS PARA EL MODAL ---
     const [showModal, setShowModal] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
 
@@ -24,153 +22,262 @@ const ReportesMascotas = () => {
         fetchLostPets();
     }, []);
 
-    // --- FUNCIÓN PARA ABRIR DETALLES ---
+    const stats = useMemo(() => {
+        const hace30Dias = new Date();
+        hace30Dias.setDate(hace30Dias.getDate() - 30);
+        return {
+            total: reports.length,
+            perdidas: reports.filter(r => !r.found).length,
+            encontradas: reports.filter(r => r.found).length,
+            resueltos30d: reports.filter(r => r.found && new Date(r.reportDate) >= hace30Dias).length
+        };
+    }, [reports]);
+
     const handleViewDetails = (report) => {
         setSelectedReport(report);
         setShowModal(true);
     };
 
     if (loading) return (
-        <div className="flex flex-col items-center justify-center p-20 text-teal-400">
-            <Loader2 className="animate-spin mb-4" size={48} />
-            <span className="text-slate-400 font-medium">Sincronizando con Railway...</span>
+        <div className="flex flex-col items-center justify-center p-20 text-teal-500">
+            <Loader2 className="animate-spin mb-2" size={40} />
+            <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">Sincronizando Reportes...</span>
         </div>
     );
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            {/* TÍTULO Y DESCRIPCIÓN */}
-            <div>
-                <h1 className="text-3xl font-bold text-white">Gestión de Reportes</h1>
-                <p className="text-slate-400 mt-1">Administra reportes de mascotas perdidas, encontradas y avistamientos</p>
-            </div>
+        <div className="p-6 space-y-6 bg-[#0f172a] min-h-screen text-slate-200">
 
-            {/* CARDS DE RESUMEN */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <SummaryCard title="Reportes Activos" value={reports.length} color="text-teal-400" bg="bg-teal-400/10" icon={<ClipboardList/>} />
-                <SummaryCard title="Perdidas" value={reports.filter(r => !r.found).length} color="text-red-400" bg="bg-red-400/10" icon={<AlertCircle/>} />
-                <SummaryCard title="Encontradas" value={reports.filter(r => r.found).length} color="text-green-400" bg="bg-green-400/10" icon={<CheckCircle2/>} />
-                <SummaryCard title="Resueltos (30d)" value="3" color="text-blue-400" bg="bg-blue-400/10" icon={<CheckCircle2/>} />
-            </div>
-
-            {/* LISTA DE REPORTES */}
-            <div className="bg-[#1e293b] rounded-3xl border border-slate-800 overflow-hidden shadow-2xl">
-                <div className="p-6 border-b border-slate-800 bg-slate-800/30">
-                    <h3 className="text-white font-bold flex items-center gap-2">
-                        <ClipboardList className="text-red-400" size={20} /> Lista de Reportes
-                    </h3>
+            {/* HEADER */}
+            <div className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-2xl font-bold text-white tracking-tight">Gestión de Reportes</h1>
+                    <p className="text-slate-400 text-xs mt-1">Administra reportes de mascotas perdidas, encontradas y avistamientos</p>
                 </div>
-
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="text-slate-500 text-[11px] uppercase tracking-widest font-black border-b border-slate-800 bg-slate-800/10">
-                                <th className="px-6 py-4">ID</th>
-                                <th className="px-6 py-4">Ubicación y Coordenadas</th>
-                                <th className="px-6 py-4">Descripción del Suceso</th>
-                                <th className="px-6 py-4">Tiempo Perdido</th>
-                                <th className="px-6 py-4">Mascota ID</th>
-                                <th className="px-6 py-4">Fecha</th>
-                                <th className="px-6 py-4 text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-800/50">
-                            {reports.map((r) => (
-                                <tr key={r.id} className="hover:bg-slate-800/40 transition-all text-white group">
-                                    <td className="px-6 py-5 font-mono text-teal-400 text-xs font-bold">RPT-00{r.id}</td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex items-center gap-2 text-sm font-medium text-slate-200">
-                                            <MapPin size={14} className="text-red-400" />
-                                            {r.lastSeenLocation || "No especificada"}
-                                        </div>
-                                        <div className="text-[10px] text-slate-500 mt-1 font-mono">
-                                            LAT: {r.lastSeenLatitude?.toFixed(4) || "---"} | LON: {r.lastSeenLongitude?.toFixed(4) || "---"}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5 text-xs text-slate-300 max-w-xs italic">
-                                        "{r.description || "Sin descripción adicional"}"
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-1 text-orange-400 text-[10px] font-bold">
-                                                <Clock size={12} /> {r.hoursLost || 0} HORAS
-                                            </div>
-                                            <span className={`text-[9px] px-2 py-0.5 rounded-full border w-fit font-bold ${r.found ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                                                {r.found ? 'RESUELTO' : 'BUSCANDO'}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5">
-                                        <span className="bg-slate-800 px-3 py-1.5 rounded-xl text-[10px] font-black border border-slate-700 text-slate-300">
-                                            #PET-{r.petId}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-5 text-sm text-slate-400">
-                                        <div className="flex items-center gap-1 text-xs">
-                                            <Calendar size={13} className="text-slate-500" />
-                                            {r.reportDate ? new Date(r.reportDate).toLocaleDateString() : '---'}
-                                        </div>
-                                    </td>
-                                    <td className="px-6 py-5 text-center">
-                                        {/* --- BOTÓN ACTUALIZADO CON handleViewDetails --- */}
-                                        <button 
-                                            onClick={() => handleViewDetails(r)}
-                                            className="p-2 hover:bg-slate-700 rounded-xl transition-all text-slate-400 hover:text-white flex items-center gap-2 mx-auto border border-transparent hover:border-slate-600"
-                                        >
-                                            <Eye size={16} />
-                                            <span className="text-[10px] font-bold">Ver</span>
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-                {reports.length === 0 && (
-                    <div className="text-center py-20 text-slate-500 italic">
-                        No hay reportes registrados en la base de datos de Zoonet.
+                <div className="bg-teal-500 p-3 px-5 rounded-xl flex items-center gap-3 shadow-lg shadow-teal-500/20">
+                    <ClipboardList size={18} className="text-white" />
+                    <div className="leading-tight">
+                        <p className="text-[9px] text-white/70 uppercase font-black tracking-widest">Total Reportes</p>
+                        <p className="text-lg font-black text-white">{stats.total}</p>
                     </div>
-                )}
+                </div>
             </div>
 
-            {/* --- MODAL DE DETALLE (Zoonet Style) --- */}
-            {showModal && selectedReport && (
-                <div className="fixed inset-0 bg-[#020617]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-[#1e293b] border border-slate-700 w-full max-w-lg rounded-3xl p-8 shadow-2xl animate-in zoom-in-95 duration-200 text-left">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-xl font-black text-white flex items-center gap-2">
-                                <ClipboardList className="text-teal-400" /> Expediente RPT-00{selectedReport.id}
-                            </h2>
-                            <button onClick={() => setShowModal(false)} className="text-slate-500 hover:text-white transition-colors">
-                                <X size={20}/>
-                            </button>
+            {/* STATS CARDS */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+
+                <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="bg-teal-500/10 p-2.5 rounded-xl">
+                            <ClipboardList className="text-teal-400" size={20} />
                         </div>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                                <DetailItem label="Ubicación" value={selectedReport.lastSeenLocation} icon={<MapPin className="text-red-400" size={14}/>}/>
-                                <DetailItem label="Coordenadas" value={`${selectedReport.lastSeenLatitude}, ${selectedReport.lastSeenLongitude}`} icon={<Activity className="text-teal-400" size={14}/>}/>
-                                <DetailItem label="Fecha del Reporte" value={new Date(selectedReport.reportDate).toLocaleString()} icon={<Calendar className="text-blue-400" size={14}/>}/>
-                            </div>
-                            <div className="space-y-4">
-                                <DetailItem label="Mascota ID" value={`#PET-${selectedReport.petId}`} icon={<CheckCircle2 className="text-orange-400" size={14}/>}/>
-                                <DetailItem label="Tiempo Transcurrido" value={`${selectedReport.hoursLost} horas`} icon={<Clock className="text-amber-400" size={14}/>}/>
+                        <span className="bg-teal-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{stats.total}</span>
+                    </div>
+                    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Reportes Activos</p>
+                    <h3 className="text-2xl font-black text-white mt-1">{stats.total}</h3>
+                    <p className="text-[10px] text-slate-500 mt-1">En sistema</p>
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500 rounded-l-2xl" />
+                </div>
+
+                <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="bg-rose-500/10 p-2.5 rounded-xl">
+                            <AlertCircle className="text-rose-400" size={20} />
+                        </div>
+                        <span className="bg-rose-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{stats.perdidas}</span>
+                    </div>
+                    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Perdidas</p>
+                    <h3 className="text-2xl font-black text-white mt-1">{stats.perdidas}</h3>
+                    <p className="text-[10px] text-rose-400 font-semibold mt-1">
+                        {stats.perdidas > 0 ? 'Requieren atención' : 'Sin alertas'}
+                    </p>
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500 rounded-l-2xl" />
+                </div>
+
+                <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="bg-emerald-500/10 p-2.5 rounded-xl">
+                            <CheckCircle2 className="text-emerald-400" size={20} />
+                        </div>
+                        <span className="bg-emerald-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{stats.encontradas}</span>
+                    </div>
+                    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Encontradas</p>
+                    <h3 className="text-2xl font-black text-white mt-1">{stats.encontradas}</h3>
+                    <div className="mt-3 bg-[#0f172a] rounded-full h-1.5">
+                        <div className="bg-emerald-500 h-1.5 rounded-full transition-all"
+                            style={{ width: stats.total > 0 ? `${(stats.encontradas / stats.total) * 100}%` : '0%' }} />
+                    </div>
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l-2xl" />
+                </div>
+
+                <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-3">
+                        <div className="bg-blue-500/10 p-2.5 rounded-xl">
+                            <CheckCircle2 className="text-blue-400" size={20} />
+                        </div>
+                        <span className="bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{stats.resueltos30d}</span>
+                    </div>
+                    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-wider">Resueltos (30d)</p>
+                    <h3 className="text-2xl font-black text-white mt-1">{stats.resueltos30d}</h3>
+                    <p className="text-[10px] text-blue-400 font-semibold mt-1">Este mes</p>
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-l-2xl" />
+                </div>
+
+            </div>
+
+            {/* TABLA */}
+            <div className="bg-[#1e293b] rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+
+                <div className="px-6 py-4 border-b border-slate-800/60 flex items-center gap-2 bg-slate-800/10">
+                    <ClipboardList className="text-teal-400" size={18} />
+                    <h2 className="font-bold text-white text-sm tracking-tight">Lista de Reportes</h2>
+                </div>
+
+                <div className="hidden md:grid grid-cols-7 px-6 py-3 bg-slate-800/30 border-b border-slate-800/50 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    <div>ID</div>
+                    <div className="col-span-2">Ubicación</div>
+                    <div className="col-span-2">Descripción</div>
+                    <div>Estado</div>
+                    <div className="text-center">Acciones</div>
+                </div>
+
+                <div className="divide-y divide-slate-800/40">
+                    {reports.length === 0 ? (
+                        <div className="px-6 py-12 text-center text-slate-500">
+                            <ClipboardList size={32} className="mx-auto mb-2 opacity-20" />
+                            <p className="text-sm">No se encontraron reportes.</p>
+                        </div>
+                    ) : (
+                        reports.map((r) => (
+                            <div key={r.id} className="grid grid-cols-1 md:grid-cols-7 px-6 py-4 items-center hover:bg-slate-800/30 transition-all gap-4 md:gap-0">
+
+                                {/* ID */}
                                 <div>
-                                    <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">Estado Actual</p>
-                                    <span className={`px-4 py-1.5 rounded-xl text-xs font-black border ${selectedReport.found ? 'text-green-400 border-green-500/20 bg-green-500/5' : 'text-red-400 border-red-500/20 bg-red-500/5'}`}>
-                                        {selectedReport.found ? 'LOCALIZADA / RESUELTO' : 'EN BÚSQUEDA ACTIVA'}
+                                    <span className="font-mono text-xs font-bold text-teal-400 bg-teal-500/5 px-2 py-1 rounded-lg border border-teal-500/10">
+                                        RPT-{String(r.id).padStart(3, '0')}
                                     </span>
                                 </div>
+
+                                {/* Ubicación */}
+                                <div className="col-span-2">
+                                    <div className="flex items-center gap-1.5 text-sm font-bold text-slate-200">
+                                        <MapPin size={13} className="text-rose-400 flex-shrink-0" />
+                                        {r.lastSeenLocation || 'No especificada'}
+                                    </div>
+                                    <p className="text-[10px] text-slate-500 font-mono mt-0.5">
+                                        {r.lastSeenLatitude?.toFixed(4) || '---'} / {r.lastSeenLongitude?.toFixed(4) || '---'}
+                                    </p>
+                                </div>
+
+                                {/* Descripción */}
+                                <div className="col-span-2">
+                                    <p className="text-xs text-slate-400 italic truncate max-w-[240px]">
+                                        "{r.description || 'Sin descripción adicional'}"
+                                    </p>
+                                    <div className="flex items-center gap-1 text-orange-400 text-[10px] font-bold mt-1">
+                                        <Clock size={11} /> {r.hoursLost || 0} horas perdida
+                                    </div>
+                                </div>
+
+                                {/* Estado */}
+                                <div>
+                                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black border ${
+                                        r.found
+                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                            : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                    }`}>
+                                        <div className={`h-1.5 w-1.5 rounded-full ${r.found ? 'bg-emerald-500' : 'bg-rose-500 animate-pulse'}`} />
+                                        {r.found ? 'RESUELTO' : 'BUSCANDO'}
+                                    </span>
+                                </div>
+
+                                {/* Acciones */}
+                                <div className="flex justify-center">
+                                    <button
+                                        onClick={() => handleViewDetails(r)}
+                                        className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-teal-400 font-bold text-[10px] rounded-lg transition-all border border-slate-700 uppercase tracking-wider flex items-center gap-1.5"
+                                    >
+                                        <Eye size={12} /> Ver
+                                    </button>
+                                </div>
+
                             </div>
-                            <div className="col-span-1 md:col-span-2 bg-[#0f172a] p-4 rounded-2xl border border-slate-800">
-                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Relato del Suceso</p>
-                                <p className="text-slate-300 text-sm italic leading-relaxed">"{selectedReport.description || "Sin detalles adicionales proporcionados."}"</p>
+                        ))
+                    )}
+                </div>
+            </div>
+
+            {/* MODAL */}
+            {showModal && selectedReport && (
+                <div className="fixed inset-0 bg-[#020617]/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-[#1e293b] border border-slate-800 w-full max-w-lg rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-slate-200">
+
+                        <div className="flex justify-between items-center mb-5">
+                            <div className="flex items-center gap-2">
+                                <ClipboardList size={18} className="text-teal-400" />
+                                <div>
+                                    <h2 className="font-black text-white text-md uppercase tracking-tight">
+                                        Expediente RPT-{String(selectedReport.id).padStart(3, '0')}
+                                    </h2>
+                                    <p className="text-[10px] text-slate-500">Ficha de reporte interno</p>
+                                </div>
+                            </div>
+                            <button onClick={() => setShowModal(false)} className="text-slate-500 hover:text-white transition-colors p-1">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800/50 col-span-2">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Ubicación</p>
+                                <p className="text-xs text-slate-200 font-medium flex items-center gap-1.5">
+                                    <MapPin size={11} className="text-rose-400" />
+                                    {selectedReport.lastSeenLocation || '---'}
+                                </p>
+                            </div>
+
+                            <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800/50">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Coordenadas</p>
+                                <p className="text-xs text-slate-300 font-mono">
+                                    {selectedReport.lastSeenLatitude?.toFixed(4) || '---'}, {selectedReport.lastSeenLongitude?.toFixed(4) || '---'}
+                                </p>
+                            </div>
+
+                            <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800/50">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Fecha</p>
+                                <p className="text-xs text-slate-300 flex items-center gap-1">
+                                    <Calendar size={11} className="text-blue-400" />
+                                    {selectedReport.reportDate ? new Date(selectedReport.reportDate).toLocaleDateString() : '---'}
+                                </p>
+                            </div>
+
+                            <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800/50">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Mascota ID</p>
+                                <p className="text-white font-mono text-xs">#PET-{selectedReport.petId}</p>
+                            </div>
+
+                            <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800/50">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Estado</p>
+                                <span className={`inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider mt-0.5 ${
+                                    selectedReport.found
+                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                        : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                                }`}>
+                                    {selectedReport.found ? 'Resuelto' : 'Buscando'}
+                                </span>
+                            </div>
+
+                            <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800/50 col-span-2">
+                                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Relato del Suceso</p>
+                                <p className="text-slate-300 text-xs italic">
+                                    "{selectedReport.description || 'Sin detalles adicionales.'}"
+                                </p>
                             </div>
                         </div>
 
-                        <button 
+                        <button
                             onClick={() => setShowModal(false)}
-                            className="w-full bg-teal-600 hover:bg-teal-500 text-white font-black py-4 rounded-xl mt-8 transition-all uppercase tracking-widest text-[10px]"
+                            className="w-full bg-teal-500 hover:bg-teal-600 text-white font-black py-3 rounded-xl transition-all uppercase tracking-widest text-[10px]"
                         >
                             Cerrar Expediente
                         </button>
@@ -180,33 +287,5 @@ const ReportesMascotas = () => {
         </div>
     );
 };
-
-// Componente auxiliar para el Modal
-const DetailItem = ({ label, value, icon }) => (
-    <div>
-        <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1 ml-1">{label}</p>
-        <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800 flex items-center gap-2">
-            {icon}
-            <span className="text-white text-xs font-medium">{value || "---"}</span>
-        </div>
-    </div>
-);
-
-const SummaryCard = ({ title, value, color, bg, icon }) => (
-    <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-800 flex justify-between items-start transition-all hover:border-slate-700 shadow-lg">
-        <div>
-            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-2">{title}</p>
-            <h2 className={`text-3xl font-black text-white`}>{value}</h2>
-        </div>
-        <div className={`${bg} ${color} p-3 rounded-2xl`}>
-            {React.cloneElement(icon, { size: 24 })}
-        </div>
-    </div>
-);
-
-// Icono extra para el modal
-const Activity = ({ size, className }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-);
 
 export default ReportesMascotas;

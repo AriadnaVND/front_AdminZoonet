@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Mail, Lock, PawPrint } from 'lucide-react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // Se eliminó Link de aquí
 import api from '../api/axios';
 
 const Login = () => {
@@ -81,10 +81,8 @@ const Login = () => {
                         Iniciar Sesión
                     </button>
                 </form>
-
-                <p className="mt-8 text-sm text-gray-400">
-                    ¿No tienes cuenta? <Link to="/register" className="text-[#2dd4bf] font-semibold hover:underline">Registrarse</Link>
-                </p>
+                
+                {/* Se eliminó por completo el bloque inferior de "¿No tienes cuenta? Registrarse" */}
             </div>
         </div>
     );
