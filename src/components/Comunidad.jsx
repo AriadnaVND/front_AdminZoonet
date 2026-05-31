@@ -69,7 +69,7 @@ const Comunidad = () => {
             const logsData = Array.isArray(logsRes.data) ? logsRes.data : [];
             setLogs(logsData);
 
-            const baseUrl = 'http://localhost:8081';
+            const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
             const data = rawData.map(p => ({
                 id: Number(p.id),
                 authorUsername: p.user?.name || 'Anónimo',

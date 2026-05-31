@@ -19,7 +19,7 @@ const AdminProfile = () => {
                 const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
                 
                 if (token) {
-                    axios.get('http://localhost:8081/api/admin/auth/profile', {
+                    axios.get(`${import.meta.env.VITE_API_URL}/admin/auth/profile`, {
                         headers: {
                             'Authorization': `Bearer ${token}`,
                             'Content-Type': 'application/json'

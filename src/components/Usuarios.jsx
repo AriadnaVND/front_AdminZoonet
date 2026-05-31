@@ -16,7 +16,7 @@ const UserManagement = () => {
     const [showViewModal, setShowViewModal] = useState(false);
     const [viewingUser, setViewingUser] = useState(null);
 
-    const BACKEND_URL = "http://localhost:8081";
+    const BACKEND_URL = import.meta.env.VITE_API_URL.replace('/api', '');
 
     useEffect(() => { loadUsers(); }, []);
 
