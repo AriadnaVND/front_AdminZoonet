@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const adminApi = axios.create({
-    baseURL: 'http://localhost:8081/api', // Puerto exclusivo de Administración
+    baseURL: 'http://98.80.224.69:8081/api', // Puerto exclusivo de Administración
 });
 
 adminApi.interceptors.request.use((config) => {
