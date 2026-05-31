@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const adminApi = axios.create({
-    baseURL: 'http://98.80.224.69:8081/api', // Puerto exclusivo de Administración
+    baseURL: import.meta.env.VITE_API_URL || import.meta.env.VITE_API_URL, // Puerto exclusivo de Administración
 });
 
 adminApi.interceptors.request.use((config) => {
