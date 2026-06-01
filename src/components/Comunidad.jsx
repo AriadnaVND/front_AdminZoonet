@@ -69,12 +69,15 @@ const Comunidad = () => {
             const logsData = Array.isArray(logsRes.data) ? logsRes.data : [];
             setLogs(logsData);
 
-            const baseUrl = import.meta.env.VITE_API_URL.replace('/api', '');
+            const API_DOMAIN = 'https://api.vickari.site';
+
             const data = rawData.map(p => ({
                 id: Number(p.id),
                 authorUsername: p.user?.name || 'Anónimo',
                 content: p.description || 'Sin descripción',
-                imageUrl: p.imageUrl ? `${baseUrl}${p.imageUrl}` : null,
+                imageUrl: p.imageUrl 
+                ? (p.imageUrl.startsWith('http') ? p.imageUrl : `${API_DOMAIN}/api${p.imageUrl.startsWith('/') ? '' : '/'}${p.imageUrl}`)
+                : null,
                 createdAt: p.createdAt || '',
                 postType: p.postType || 'UNKNOWN',
                 reactions: Array.isArray(p.reactions) ? p.reactions.length : 0,
