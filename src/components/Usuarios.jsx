@@ -55,7 +55,7 @@ const UserManagement = () => {
         if (!photoPath) return null;
         if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) return photoPath;
         if (photoPath.startsWith("/")) return `${BACKEND_URL}${photoPath}`;
-        return `${BACKEND_URL}/${photoPath}`;
+        return `https://api.vickari.site/api/uploads/${photoPath.replace(/^\//, '')}`;
     };
 
     const handleContactar = (user) => {
