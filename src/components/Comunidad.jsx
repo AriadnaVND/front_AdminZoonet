@@ -75,9 +75,9 @@ const Comunidad = () => {
                 id: Number(p.id),
                 authorUsername: p.user?.name || 'Anónimo',
                 content: p.description || 'Sin descripción',
-                imageUrl: p.imageUrl 
-                ? (p.imageUrl.startsWith('http') ? p.imageUrl : `${API_DOMAIN}/api${p.imageUrl.startsWith('/') ? '' : '/'}${p.imageUrl}`)
-                : null,
+                imageUrl: p.imageUrl
+                    ? (p.imageUrl.startsWith('http') ? p.imageUrl : `${API_DOMAIN}${p.imageUrl.startsWith('/') ? '' : '/'}${p.imageUrl}`)
+                    : null,
                 createdAt: p.createdAt || '',
                 postType: p.postType || 'UNKNOWN',
                 reactions: Array.isArray(p.reactions) ? p.reactions.length : 0,
