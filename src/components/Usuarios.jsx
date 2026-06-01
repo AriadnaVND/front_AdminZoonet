@@ -16,7 +16,7 @@ const UserManagement = () => {
     const [showViewModal, setShowViewModal] = useState(false);
     const [viewingUser, setViewingUser] = useState(null);
 
-    const BACKEND_URL = import.meta.env.VITE_API_URL.replace('/api', '');
+    const BACKEND_URL = "https://api.vickari.site";
 
     useEffect(() => { loadUsers(); }, []);
 
@@ -53,12 +53,9 @@ const UserManagement = () => {
 
     const getPetPhotoUrl = (photoPath) => {
         if (!photoPath) return null;
-        if (photoPath.startsWith("http")) return photoPath;
-
-        // LA CLAVE: Forzamos la URL absoluta hacia tu dominio API
-        // Si photoPath empieza con /, lo quitamos para no tener dobles //
-        const cleanPath = photoPath.startsWith('/') ? photoPath.substring(1) : photoPath;
-        return `https://api.vickari.site/api/uploads/${cleanPath}`;
+        if (photoPath.startsWith("http://") || photoPath.startsWith("https://")) return photoPath;
+        if (photoPath.startsWith("/")) return `${BACKEND_URL}${photoPath}`;
+        return `${BACKEND_URL}/${photoPath}`;
     };
 
     const handleContactar = (user) => {
@@ -160,29 +157,33 @@ const UserManagement = () => {
             <div className="flex gap-3">
                 <button
                     onClick={() => setFilterPlan(filterPlan === 'PREMIUM' ? 'ALL' : 'PREMIUM')}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-xs transition-all uppercase tracking-wide ${filterPlan === 'PREMIUM'
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-xs transition-all uppercase tracking-wide ${
+                        filterPlan === 'PREMIUM'
                             ? 'bg-teal-500 text-white shadow-lg shadow-teal-500/20'
                             : 'bg-[#1e293b] text-slate-400 border border-slate-800 hover:text-slate-200'
-                        }`}
+                    }`}
                 >
                     <Crown size={14} />
                     Premium
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${filterPlan === 'PREMIUM' ? 'bg-white/20 text-white' : 'bg-[#0f172a] text-teal-400'
-                        }`}>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                        filterPlan === 'PREMIUM' ? 'bg-white/20 text-white' : 'bg-[#0f172a] text-teal-400'
+                    }`}>
                         {stats.premium}
                     </span>
                 </button>
                 <button
                     onClick={() => setFilterPlan(filterPlan === 'FREE' ? 'ALL' : 'FREE')}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-xs transition-all uppercase tracking-wide ${filterPlan === 'FREE'
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl font-bold text-xs transition-all uppercase tracking-wide ${
+                        filterPlan === 'FREE'
                             ? 'bg-slate-700 text-white shadow-lg'
                             : 'bg-[#1e293b] text-slate-400 border border-slate-800 hover:text-slate-200'
-                        }`}
+                    }`}
                 >
                     <Users size={14} />
                     Gratuitos
-                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${filterPlan === 'FREE' ? 'bg-white/20 text-white' : 'bg-[#0f172a] text-teal-400'
-                        }`}>
+                    <span className={`px-2 py-0.5 rounded-md text-[10px] font-black ${
+                        filterPlan === 'FREE' ? 'bg-white/20 text-white' : 'bg-[#0f172a] text-teal-400'
+                    }`}>
                         {stats.free}
                     </span>
                 </button>
@@ -198,8 +199,6 @@ const UserManagement = () => {
 
             {/* STATS CARDS */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-                {/* Total Premium */}
                 <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="flex justify-between items-start mb-3">
                         <div className="bg-teal-500/10 p-2.5 rounded-xl">
@@ -215,7 +214,6 @@ const UserManagement = () => {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500 rounded-l-2xl" />
                 </div>
 
-                {/* Activos */}
                 <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="flex justify-between items-start mb-3">
                         <div className="bg-emerald-500/10 p-2.5 rounded-xl">
@@ -236,7 +234,6 @@ const UserManagement = () => {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l-2xl" />
                 </div>
 
-                {/* Nuevos */}
                 <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="flex justify-between items-start mb-3">
                         <div className="bg-blue-500/10 p-2.5 rounded-xl">
@@ -252,7 +249,6 @@ const UserManagement = () => {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-l-2xl" />
                 </div>
 
-                {/* Mascotas */}
                 <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="flex justify-between items-start mb-3">
                         <div className="bg-purple-500/10 p-2.5 rounded-xl">
@@ -267,12 +263,10 @@ const UserManagement = () => {
                     <p className="text-[10px] text-slate-500 mt-1">Registradas</p>
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500 rounded-l-2xl" />
                 </div>
-
             </div>
 
             {/* TABLA */}
             <div className="bg-[#1e293b] rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-
                 <div className="px-6 py-4 border-b border-slate-800/60 flex flex-col md:flex-row gap-3 items-start md:items-center justify-between bg-slate-800/10">
                     <div className="flex items-center gap-2">
                         <Crown className="text-teal-400" size={18} />
@@ -306,10 +300,11 @@ const UserManagement = () => {
                                         <button
                                             key={val}
                                             onClick={(e) => { e.stopPropagation(); setFilterStatus(val); setShowStatusDropdown(false); }}
-                                            className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-between ${filterStatus === val
+                                            className={`w-full text-left px-4 py-2.5 text-xs font-semibold transition-colors flex items-center justify-between ${
+                                                filterStatus === val
                                                     ? 'bg-[#0f172a] text-teal-400 font-bold'
                                                     : 'text-slate-400 hover:bg-[#0f172a]/50 hover:text-slate-200'
-                                                }`}
+                                            }`}
                                         >
                                             {label}
                                             {filterStatus === val && <CheckCircle size={13} className="text-teal-400" />}
@@ -339,13 +334,13 @@ const UserManagement = () => {
                         filteredUsers.map((user) => (
                             <div key={user.id} className="grid grid-cols-1 md:grid-cols-5 px-6 py-4 items-center hover:bg-slate-800/30 transition-all gap-4 md:gap-0">
 
-                                {/* Titular */}
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
-                                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-black text-sm shadow-md border ${user.plan === 'PREMIUM'
+                                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-black text-sm shadow-md border ${
+                                            user.plan === 'PREMIUM'
                                                 ? 'bg-teal-500/10 border-teal-500 text-teal-400'
                                                 : 'bg-slate-800 border-slate-700 text-slate-400'
-                                            }`}>
+                                        }`}>
                                             {user.name.charAt(0).toUpperCase()}
                                         </div>
                                         {user.plan === 'PREMIUM' && (
@@ -360,7 +355,6 @@ const UserManagement = () => {
                                     </div>
                                 </div>
 
-                                {/* Contacto */}
                                 <div>
                                     <p className="text-slate-300 text-xs flex items-center gap-1.5 truncate max-w-[180px]">
                                         <Mail size={11} className="text-slate-500 flex-shrink-0" />
@@ -368,7 +362,6 @@ const UserManagement = () => {
                                     </p>
                                 </div>
 
-                                {/* Mascota */}
                                 <div className="flex items-center gap-3">
                                     {user.petPhoto ? (
                                         <img
@@ -397,23 +390,24 @@ const UserManagement = () => {
                                     </div>
                                 </div>
 
-                                {/* Estado toggle */}
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => handleStatusChange(user.id, user.active)}
-                                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${user.active ? 'bg-teal-500' : 'bg-slate-700 border border-slate-600'
-                                            }`}
+                                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${
+                                            user.active ? 'bg-teal-500' : 'bg-slate-700 border border-slate-600'
+                                        }`}
                                     >
-                                        <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-md transition-transform ${user.active ? 'translate-x-4' : 'translate-x-0.5'
-                                            }`} />
+                                        <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-md transition-transform ${
+                                            user.active ? 'translate-x-4' : 'translate-x-0.5'
+                                        }`} />
                                     </button>
-                                    <span className={`text-[10px] font-black tracking-wider uppercase ${user.active ? 'text-emerald-400' : 'text-rose-400'
-                                        }`}>
+                                    <span className={`text-[10px] font-black tracking-wider uppercase ${
+                                        user.active ? 'text-emerald-400' : 'text-rose-400'
+                                    }`}>
                                         {user.active ? 'Activo' : 'Suspendido'}
                                     </span>
                                 </div>
 
-                                {/* Fecha + Ver Perfil */}
                                 <div className="flex items-center justify-between md:justify-end gap-4 border-t border-slate-800/40 pt-3 md:pt-0 md:border-none">
                                     <div className="text-left md:text-right font-mono text-[10px] text-slate-500 flex items-center gap-1">
                                         <Calendar size={11} />
@@ -453,13 +447,13 @@ const UserManagement = () => {
                             </button>
                         </div>
 
-                        {/* Avatar + nombre */}
                         <div className="bg-[#0f172a] rounded-2xl p-4 flex items-center gap-4 border border-slate-800/60 mb-4">
                             <div className="relative">
-                                <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-black text-lg shadow-md border ${viewingUser.plan === 'PREMIUM'
+                                <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-black text-lg shadow-md border ${
+                                    viewingUser.plan === 'PREMIUM'
                                         ? 'bg-teal-500/10 border-teal-500 text-teal-400'
                                         : 'bg-slate-800 border-slate-700 text-slate-400'
-                                    }`}>
+                                }`}>
                                     {viewingUser.name.charAt(0).toUpperCase()}
                                 </div>
                                 {viewingUser.plan === 'PREMIUM' && (
@@ -470,17 +464,17 @@ const UserManagement = () => {
                             </div>
                             <div>
                                 <p className="font-black text-white text-md tracking-tight uppercase">{viewingUser.name}</p>
-                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider mt-1 ${viewingUser.plan === 'PREMIUM'
+                                <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider mt-1 ${
+                                    viewingUser.plan === 'PREMIUM'
                                         ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20'
                                         : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                                    }`}>
+                                }`}>
                                     {viewingUser.plan === 'PREMIUM' && <Crown size={9} />}
                                     Suscripción {viewingUser.plan === 'PREMIUM' ? 'Premium' : 'Free'}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Datos */}
                         <div className="grid grid-cols-2 gap-3 mb-5">
                             <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800/50 col-span-2">
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Identificación Digital (Email)</p>
@@ -494,7 +488,12 @@ const UserManagement = () => {
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Soporte IoT & Mascota</p>
                                 <div className="flex items-center gap-2">
                                     {viewingUser.petPhoto && (
-                                        <img src={getPetPhotoUrl(viewingUser.petPhoto)} alt="" className="h-6 w-6 rounded-md object-cover border border-slate-700" />
+                                        <img
+                                            src={getPetPhotoUrl(viewingUser.petPhoto)}
+                                            alt=""
+                                            className="h-6 w-6 rounded-md object-cover border border-slate-700"
+                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
                                     )}
                                     <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">
                                         {viewingUser.petName || 'Ninguna'}
@@ -512,16 +511,16 @@ const UserManagement = () => {
 
                             <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800/50">
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Estado de Acceso</p>
-                                <span className={`inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider mt-0.5 ${viewingUser.active
+                                <span className={`inline-block px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider mt-0.5 ${
+                                    viewingUser.active
                                         ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
                                         : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
-                                    }`}>
+                                }`}>
                                     {viewingUser.active ? 'Operativo' : 'Inactivo'}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Botones */}
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => handleContactar(viewingUser)}
@@ -532,10 +531,11 @@ const UserManagement = () => {
                             </button>
                             <button
                                 onClick={() => handleStatusChange(viewingUser.id, viewingUser.active)}
-                                className={`flex items-center justify-center gap-2 font-black py-3 rounded-xl transition-all text-[10px] uppercase tracking-wider border ${viewingUser.active
+                                className={`flex items-center justify-center gap-2 font-black py-3 rounded-xl transition-all text-[10px] uppercase tracking-wider border ${
+                                    viewingUser.active
                                         ? 'border-slate-700 bg-slate-800 text-amber-500 hover:bg-rose-950/20 hover:text-rose-400 hover:border-rose-900/40'
                                         : 'border-slate-700 bg-slate-800 text-emerald-400 hover:bg-emerald-950/20'
-                                    }`}
+                                }`}
                             >
                                 <UserX size={13} />
                                 {viewingUser.active ? 'Suspender' : 'Activar'}
