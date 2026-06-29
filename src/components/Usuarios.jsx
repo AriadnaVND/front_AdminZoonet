@@ -16,7 +16,7 @@ const UserManagement = () => {
     const [showViewModal, setShowViewModal] = useState(false);
     const [viewingUser, setViewingUser] = useState(null);
 
-    const BACKEND_URL = "http://localhost:8081";
+    const BACKEND_URL = "https://api.vickari.site";
 
     useEffect(() => { loadUsers(); }, []);
 
@@ -199,8 +199,6 @@ const UserManagement = () => {
 
             {/* STATS CARDS */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-                {/* Total Premium */}
                 <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="flex justify-between items-start mb-3">
                         <div className="bg-teal-500/10 p-2.5 rounded-xl">
@@ -216,7 +214,6 @@ const UserManagement = () => {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-teal-500 rounded-l-2xl" />
                 </div>
 
-                {/* Activos */}
                 <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="flex justify-between items-start mb-3">
                         <div className="bg-emerald-500/10 p-2.5 rounded-xl">
@@ -237,7 +234,6 @@ const UserManagement = () => {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500 rounded-l-2xl" />
                 </div>
 
-                {/* Nuevos */}
                 <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="flex justify-between items-start mb-3">
                         <div className="bg-blue-500/10 p-2.5 rounded-xl">
@@ -253,7 +249,6 @@ const UserManagement = () => {
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500 rounded-l-2xl" />
                 </div>
 
-                {/* Mascotas */}
                 <div className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 shadow-sm relative overflow-hidden">
                     <div className="flex justify-between items-start mb-3">
                         <div className="bg-purple-500/10 p-2.5 rounded-xl">
@@ -268,12 +263,10 @@ const UserManagement = () => {
                     <p className="text-[10px] text-slate-500 mt-1">Registradas</p>
                     <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500 rounded-l-2xl" />
                 </div>
-
             </div>
 
             {/* TABLA */}
             <div className="bg-[#1e293b] rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-
                 <div className="px-6 py-4 border-b border-slate-800/60 flex flex-col md:flex-row gap-3 items-start md:items-center justify-between bg-slate-800/10">
                     <div className="flex items-center gap-2">
                         <Crown className="text-teal-400" size={18} />
@@ -341,7 +334,6 @@ const UserManagement = () => {
                         filteredUsers.map((user) => (
                             <div key={user.id} className="grid grid-cols-1 md:grid-cols-5 px-6 py-4 items-center hover:bg-slate-800/30 transition-all gap-4 md:gap-0">
 
-                                {/* Titular */}
                                 <div className="flex items-center gap-3">
                                     <div className="relative">
                                         <div className={`h-10 w-10 rounded-xl flex items-center justify-center font-black text-sm shadow-md border ${
@@ -363,7 +355,6 @@ const UserManagement = () => {
                                     </div>
                                 </div>
 
-                                {/* Contacto */}
                                 <div>
                                     <p className="text-slate-300 text-xs flex items-center gap-1.5 truncate max-w-[180px]">
                                         <Mail size={11} className="text-slate-500 flex-shrink-0" />
@@ -371,7 +362,6 @@ const UserManagement = () => {
                                     </p>
                                 </div>
 
-                                {/* Mascota */}
                                 <div className="flex items-center gap-3">
                                     {user.petPhoto ? (
                                         <img
@@ -400,7 +390,6 @@ const UserManagement = () => {
                                     </div>
                                 </div>
 
-                                {/* Estado toggle */}
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => handleStatusChange(user.id, user.active)}
@@ -419,7 +408,6 @@ const UserManagement = () => {
                                     </span>
                                 </div>
 
-                                {/* Fecha + Ver Perfil */}
                                 <div className="flex items-center justify-between md:justify-end gap-4 border-t border-slate-800/40 pt-3 md:pt-0 md:border-none">
                                     <div className="text-left md:text-right font-mono text-[10px] text-slate-500 flex items-center gap-1">
                                         <Calendar size={11} />
@@ -459,7 +447,6 @@ const UserManagement = () => {
                             </button>
                         </div>
 
-                        {/* Avatar + nombre */}
                         <div className="bg-[#0f172a] rounded-2xl p-4 flex items-center gap-4 border border-slate-800/60 mb-4">
                             <div className="relative">
                                 <div className={`h-12 w-12 rounded-xl flex items-center justify-center font-black text-lg shadow-md border ${
@@ -488,7 +475,6 @@ const UserManagement = () => {
                             </div>
                         </div>
 
-                        {/* Datos */}
                         <div className="grid grid-cols-2 gap-3 mb-5">
                             <div className="bg-[#0f172a] p-3 rounded-xl border border-slate-800/50 col-span-2">
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Identificación Digital (Email)</p>
@@ -502,7 +488,12 @@ const UserManagement = () => {
                                 <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Soporte IoT & Mascota</p>
                                 <div className="flex items-center gap-2">
                                     {viewingUser.petPhoto && (
-                                        <img src={getPetPhotoUrl(viewingUser.petPhoto)} alt="" className="h-6 w-6 rounded-md object-cover border border-slate-700" />
+                                        <img
+                                            src={getPetPhotoUrl(viewingUser.petPhoto)}
+                                            alt=""
+                                            className="h-6 w-6 rounded-md object-cover border border-slate-700"
+                                            onError={(e) => { e.target.style.display = 'none'; }}
+                                        />
                                     )}
                                     <p className="text-xs text-slate-300 font-bold uppercase tracking-tight">
                                         {viewingUser.petName || 'Ninguna'}
@@ -530,7 +521,6 @@ const UserManagement = () => {
                             </div>
                         </div>
 
-                        {/* Botones */}
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => handleContactar(viewingUser)}
