@@ -70,14 +70,11 @@ const Comunidad = () => {
             setLogs(logsData);
 
             const API_DOMAIN = 'https://api.vickari.site';
-
             const data = rawData.map(p => ({
                 id: Number(p.id),
                 authorUsername: p.user?.name || 'Anónimo',
                 content: p.description || 'Sin descripción',
-                imageUrl: p.imageUrl
-                    ? (p.imageUrl.startsWith('http') ? p.imageUrl : `${API_DOMAIN}${p.imageUrl.startsWith('/') ? '' : '/'}${p.imageUrl}`)
-                    : null,
+                imageUrl: p.imageUrl ? (p.imageUrl.startsWith('http') ? p.imageUrl : `${API_DOMAIN}${p.imageUrl.startsWith('/') ? '' : '/'}${p.imageUrl}`) : null,
                 createdAt: p.createdAt || '',
                 postType: p.postType || 'UNKNOWN',
                 reactions: Array.isArray(p.reactions) ? p.reactions.length : 0,
@@ -93,11 +90,10 @@ const Comunidad = () => {
         }
     }, []);
 
-    // FUNCIÓN ACTUALIZADA Y CORREGIDA
     const analizarPost = useCallback(async (postId) => {
         setAnalyzingIds(prev => new Set(prev).add(postId));
         try {
-            // Asegúrate de que esta ruta coincida con @PostMapping("/posts/{id}/analizar") en tu Controller
+            // Esta ruta coincide con @PostMapping("/posts/{id}/analizar")
             await adminApi.post(`/admin/community/posts/${postId}/analizar`);
         } catch (err) {
             console.error(`Error analizando post ${postId}:`, err);
@@ -114,10 +110,7 @@ const Comunidad = () => {
         const init = async () => {
             setAnalyzing(true);
             const { data, logsData } = await loadData();
-
-            const sinModerar = data.filter(
-                post => !logsData.some(log => Number(log.postId) === Number(post.id))
-            );
+            const sinModerar = data.filter(post => !logsData.some(log => Number(log.postId) === Number(post.id)));
 
             if (sinModerar.length > 0) {
                 for (let i = 0; i < sinModerar.length; i += 3) {
@@ -132,9 +125,7 @@ const Comunidad = () => {
     }, [loadData, analizarPost]);
 
     const totalReacciones = posts.reduce((acc, p) => acc + (p.reactions || 0), 0);
-    const procesadasPorIA = posts.filter(p =>
-        logs.some(l => Number(l.postId) === Number(p.id))
-    ).length;
+    const procesadasPorIA = posts.filter(p => logs.some(l => Number(l.postId) === Number(p.id))).length;
     const countIA = procesadasPorIA;
 
     const filteredPosts = posts.filter(post => {
@@ -145,9 +136,7 @@ const Comunidad = () => {
     const formatDate = (dateStr) => {
         if (!dateStr) return '';
         try {
-            return new Date(dateStr).toLocaleDateString('es-PE', {
-                day: '2-digit', month: 'short', year: 'numeric'
-            });
+            return new Date(dateStr).toLocaleDateString('es-PE', { day: '2-digit', month: 'short', year: 'numeric' });
         } catch { return dateStr; }
     };
 
@@ -169,22 +158,53 @@ const Comunidad = () => {
                 </div>
                 {analyzing && (
                     <div className="flex items-center gap-2 bg-teal-50 border border-teal-200 text-teal-700 px-4 py-2 rounded-full text-sm font-medium">
-                        <BrainCircuit size={16} className="animate-pulse" />
-                        Analizando publicaciones...
+                        <BrainCircuit size={16} className="animate-pulse" /> Analizando publicaciones...
                     </div>
                 )}
             </div>
 
-            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <StatCard title="Total Publicaciones" value={posts.length} icon={MessageCircle} color="border-teal-400" badge={`${countIA} con IA`} />
                 <StatCard title="Procesadas por IA" value={procesadasPorIA} icon={BrainCircuit} color="border-green-400" badge={posts.length > 0 ? Math.round((procesadasPorIA / posts.length) * 100) + '%' : '0%'} />
                 <StatCard title="Total Reacciones" value={totalReacciones} icon={Heart} color="border-pink-400" />
             </div>
 
-            {/* Filtros y Posts (resto del JSX igual)... */}
-            {/* [Se mantiene la lógica original de renderizado de posts...] */}
-            {/* Asegúrate de que el botón de "Analizar con IA" dentro del map siga usando la función analizarPost local */}
+            <div className="flex gap-3 mb-6">
+                <button onClick={() => setActiveFilter('todas')} className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${activeFilter === 'todas' ? 'bg-teal-500 text-white' : 'bg-[#1e293b] text-slate-400 border border-slate-700'}`}>
+                    Todas ({posts.length})
+                </button>
+                <button onClick={() => setActiveFilter('ia')} className={`px-5 py-2 rounded-full text-sm font-bold transition-all ${activeFilter === 'ia' ? 'bg-green-500 text-white' : 'bg-[#1e293b] text-slate-400 border border-slate-700'}`}>
+                    Procesadas IA ({countIA})
+                </button>
+            </div>
+
+            <div className="space-y-4">
+                {filteredPosts.map(post => {
+                    const moderation = logs.find(log => Number(log.postId) === Number(post.id));
+                    return (
+                        <div key={post.id} className="bg-[#1e293b] rounded-2xl border border-slate-800 shadow-sm overflow-hidden">
+                            <div className="p-5 border-b border-slate-800">
+                                <div className="flex items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center text-white font-black text-base">{post.authorUsername.charAt(0).toUpperCase()}</div>
+                                        <div>
+                                            <p className="font-bold text-white text-sm">{post.authorUsername}</p>
+                                            <p className="text-slate-500 text-xs flex items-center gap-1"><Clock size={10} /> {formatDate(post.createdAt)}</p>
+                                        </div>
+                                    </div>
+                                    {moderation ? <ModerationBadge moderation={moderation} postType={post.postType} /> : (
+                                        <button onClick={() => analizarPost(post.id)} className="bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold px-3 py-1.5 rounded-full">Analizar con IA</button>
+                                    )}
+                                </div>
+                            </div>
+                            <div className="p-5">
+                                <p className="text-slate-300 text-sm mb-4 leading-relaxed">{post.content}</p>
+                                {post.imageUrl && <img src={post.imageUrl} alt="post" className="w-full h-64 object-cover rounded-xl" />}
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
     );
 };
